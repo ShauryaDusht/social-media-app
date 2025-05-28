@@ -1,0 +1,95 @@
+package api
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"social-media-app/internal/api/handlers"
+	"social-media-app/internal/api/middleware"
+	"social-media-app/internal/config"
+)
+
+func SetupRoutes(cfg *config.Config) *gin.Engine {
+	// Set Gin mode
+	if cfg.Server.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	router := gin.New()
+
+	// Global middleware
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+	router.Use(middleware.CORS())
+
+	// Health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
+			"message": "Social Media API is running",
+		})
+	})
+
+	// API routes
+	api := router.Group("/api")
+	{
+		// Authentication routes (no auth required)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", handlers.Register)
+			auth.POST("/login", handlers.Login)
+		}
+
+		// Protected routes (require authentication)
+		protected := api.Group("/")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			// User routes
+			users := protected.Group("/users")
+			{
+				users.GET("/profile", handlers.GetProfile)
+				users.PUT("/profile", handlers.UpdateProfile)
+				users.GET("/:id", handlers.GetUserByID)
+			}
+
+			// Post routes
+			posts := protected.Group("/posts")
+			{
+				posts.GET("/", handlers.GetPosts)                  // Get timeline/all posts
+				posts.POST("/", handlers.CreatePost)               // Create new post
+				posts.GET("/:id", handlers.GetPostByID)            // Get specific post
+				posts.PUT("/:id", handlers.UpdatePost)             // Update post
+				posts.DELETE("/:id", handlers.DeletePost)          // Delete post
+				posts.GET("/user/:user_id", handlers.GetUserPosts) // Get posts by user
+			}
+
+			// Like routes
+			likes := protected.Group("/likes")
+			{
+				likes.POST("/", handlers.LikePost)             // Like a post
+				likes.DELETE("/:post_id", handlers.UnlikePost) // Unlike a post
+			}
+
+			// Follow routes
+			follows := protected.Group("/follows")
+			{
+				follows.POST("/", handlers.FollowUser)                    // Follow a user
+				follows.DELETE("/:user_id", handlers.UnfollowUser)        // Unfollow a user
+				follows.GET("/followers/:user_id", handlers.GetFollowers) // Get user's followers
+				follows.GET("/following/:user_id", handlers.GetFollowing) // Get who user follows
+			}
+
+			// Timeline route
+			timeline := protected.Group("/timeline")
+			{
+				timeline.GET("/", handlers.GetTimeline) // Get personalized timeline
+			}
+		}
+	}
+
+	// Serve static files (for uploaded images, CSS, JS)
+	router.Static("/static", "./web/static")
+
+	return router
+}

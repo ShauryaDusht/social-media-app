@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWTClaims represents the JWT claims
+// JWT Claims
 type JWTClaims struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
@@ -15,7 +15,7 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-// GenerateToken generates a JWT token for the user
+// Generates a JWT token for the user
 func GenerateToken(userID uint, username, email, secret string, expiry time.Duration) (string, error) {
 	claims := JWTClaims{
 		UserID:   userID,
@@ -32,7 +32,7 @@ func GenerateToken(userID uint, username, email, secret string, expiry time.Dura
 	return token.SignedString([]byte(secret))
 }
 
-// ValidateToken validates and parses a JWT token
+// Validates and parses a JWT token
 func ValidateToken(tokenString, secret string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

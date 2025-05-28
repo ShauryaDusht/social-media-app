@@ -39,6 +39,5 @@ vendor/
 dist/
 build/
 
-
-# Files not completed yet
-internal/api/
+# Documentation
+phase2.md
