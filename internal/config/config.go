@@ -93,7 +93,7 @@ func Load() *Config {
 			Expiry: jwtExpiry,
 		},
 		Server: ServerConfig{
-			Host: getEnv("SERVER_HOST", "localhost"),
+			Host: getEnv("SERVER_HOST", "0.0.0.0"),
 			Port: getEnv("SERVER_PORT", "8080"),
 			Env:  getEnv("ENVIRONMENT", "development"),
 		},
@@ -110,10 +110,9 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-// Optional: Replace with real secret from environment or file in prod
 func generateSecureJWTSecret() string {
-	// WARNING: This is just for fallback use. Never rely on generated secret at runtime in prod.
-	log.Println("WARNING: JWT_SECRET not set; using insecure generated fallback.")
-	return "insecure-generated-secret-use-env-var-in-prod"
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Error loading .env file: %v", err)
+	}
+	return os.Getenv("JWT_SECRET")
 }
