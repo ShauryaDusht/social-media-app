@@ -24,12 +24,10 @@ func NewAuthService(userRepo repository.UserRepository, cfg *config.Config) *Aut
 
 // Register registers a new user
 func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginResponse, error) {
-	// Validate input
 	if err := s.validateRegisterRequest(req); err != nil {
 		return nil, err
 	}
 
-	// Check if email already exists
 	emailExists, err := s.userRepo.EmailExists(req.Email)
 	if err != nil {
 		return nil, errors.New("failed to check email existence")
@@ -38,7 +36,6 @@ func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginRespons
 		return nil, errors.New("email already exists")
 	}
 
-	// Check if username already exists
 	usernameExists, err := s.userRepo.UsernameExists(req.Username)
 	if err != nil {
 		return nil, errors.New("failed to check username existence")
@@ -47,13 +44,11 @@ func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginRespons
 		return nil, errors.New("username already exists")
 	}
 
-	// Hash password
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return nil, errors.New("failed to hash password")
 	}
 
-	// Create user
 	user := &models.User{
 		Username:  req.Username,
 		Email:     req.Email,
@@ -67,7 +62,6 @@ func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginRespons
 		return nil, errors.New("failed to create user")
 	}
 
-	// Generate JWT token
 	token, err := utils.GenerateToken(
 		user.ID,
 		user.Username,
@@ -87,28 +81,23 @@ func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginRespons
 
 // Login authenticates a user
 func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, error) {
-	// Validate input
 	if err := s.validateLoginRequest(req); err != nil {
 		return nil, err
 	}
 
-	// Get user by email
 	user, err := s.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		return nil, errors.New("invalid email or password")
 	}
 
-	// Check if user is active
 	if !user.IsActive {
 		return nil, errors.New("account is deactivated")
 	}
 
-	// Verify password
 	if !utils.CheckPasswordHash(req.Password, user.Password) {
 		return nil, errors.New("invalid email or password")
 	}
 
-	// Generate JWT token
 	token, err := utils.GenerateToken(
 		user.ID,
 		user.Username,
@@ -136,7 +125,6 @@ func (s *AuthService) GetUserByID(id uint) (*models.User, error) {
 	return s.userRepo.GetByID(id)
 }
 
-// validateRegisterRequest validates registration request
 func (s *AuthService) validateRegisterRequest(req models.RegisterRequest) error {
 	if strings.TrimSpace(req.Username) == "" {
 		return errors.New("username is required")
@@ -162,7 +150,6 @@ func (s *AuthService) validateRegisterRequest(req models.RegisterRequest) error 
 	return nil
 }
 
-// validateLoginRequest validates login request
 func (s *AuthService) validateLoginRequest(req models.LoginRequest) error {
 	if strings.TrimSpace(req.Email) == "" {
 		return errors.New("email is required")

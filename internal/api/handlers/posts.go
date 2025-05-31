@@ -15,7 +15,7 @@ func GetPosts(c *gin.Context) {
 	utils.ErrorResponse(c, http.StatusNotImplemented, "Get posts endpoint not implemented yet")
 }
 
-// Crreates a new post
+// Creates a new post
 func CreatePost(c *gin.Context) {
 	utils.ErrorResponse(c, http.StatusNotImplemented, "Create post endpoint not implemented yet")
 }

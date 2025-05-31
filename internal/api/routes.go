@@ -39,6 +39,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 		{
 			auth.POST("/register", handlers.Register)
 			auth.POST("/login", handlers.Login)
+			auth.POST("/logout", handlers.Logout)
 		}
 
 		// Protected routes (require authentication)
@@ -56,34 +57,34 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 			// Post routes
 			posts := protected.Group("/posts")
 			{
-				posts.GET("/", handlers.GetPosts)                  // Get timeline/all posts
-				posts.POST("/", handlers.CreatePost)               // Create new post
-				posts.GET("/:id", handlers.GetPostByID)            // Get specific post
-				posts.PUT("/:id", handlers.UpdatePost)             // Update post
-				posts.DELETE("/:id", handlers.DeletePost)          // Delete post
-				posts.GET("/user/:user_id", handlers.GetUserPosts) // Get posts by user
+				posts.GET("/", handlers.GetPosts)
+				posts.POST("/", handlers.CreatePost)
+				posts.GET("/:id", handlers.GetPostByID)
+				posts.PUT("/:id", handlers.UpdatePost)
+				posts.DELETE("/:id", handlers.DeletePost)
+				posts.GET("/user/:user_id", handlers.GetUserPosts)
 			}
 
 			// Like routes
 			likes := protected.Group("/likes")
 			{
-				likes.POST("/", handlers.LikePost)             // Like a post
-				likes.DELETE("/:post_id", handlers.UnlikePost) // Unlike a post
+				likes.POST("/", handlers.LikePost)
+				likes.DELETE("/:post_id", handlers.UnlikePost)
 			}
 
 			// Follow routes
 			follows := protected.Group("/follows")
 			{
-				follows.POST("/", handlers.FollowUser)                    // Follow a user
-				follows.DELETE("/:user_id", handlers.UnfollowUser)        // Unfollow a user
-				follows.GET("/followers/:user_id", handlers.GetFollowers) // Get user's followers
-				follows.GET("/following/:user_id", handlers.GetFollowing) // Get who user follows
+				follows.POST("/", handlers.FollowUser)
+				follows.DELETE("/:user_id", handlers.UnfollowUser)
+				follows.GET("/followers/:user_id", handlers.GetFollowers)
+				follows.GET("/following/:user_id", handlers.GetFollowing)
 			}
 
 			// Timeline route
 			timeline := protected.Group("/timeline")
 			{
-				timeline.GET("/", handlers.GetTimeline) // Get personalized timeline
+				timeline.GET("/", handlers.GetTimeline)
 			}
 		}
 	}

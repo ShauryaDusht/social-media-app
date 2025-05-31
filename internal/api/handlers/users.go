@@ -2,23 +2,75 @@ package handlers
 
 import (
 	"net/http"
-
-	"social-media-app/internal/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+
+	"social-media-app/internal/database"
+	"social-media-app/internal/models"
+	"social-media-app/internal/repository"
+	"social-media-app/internal/services"
+	"social-media-app/internal/utils"
 )
 
-// Gets current user's profile
+var userService *services.UserService
+
+func init() {
+	userRepo := repository.NewUserRepository(database.GetDB())
+	userService = services.NewUserService(userRepo)
+}
+
 func GetProfile(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Get profile endpoint not implemented yet")
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	profile, err := userService.GetProfile(userID.(uint))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "User not found")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Profile retrieved successfully", profile)
 }
 
-// Updates current user's profile
 func UpdateProfile(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Update profile endpoint not implemented yet")
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	var req models.UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input data")
+		return
+	}
+
+	profile, err := userService.UpdateProfile(userID.(uint), req)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Profile updated successfully", profile)
 }
 
-// Gets user by ID
 func GetUserByID(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Get user by ID endpoint not implemented yet")
+	idParam := c.Param("id")
+	userID, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	profile, err := userService.GetUserByID(uint(userID))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "User not found")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "User retrieved successfully", profile)
 }

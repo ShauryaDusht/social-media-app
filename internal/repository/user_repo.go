@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"social-media-app/internal/models"
 
 	"gorm.io/gorm"
@@ -26,9 +25,6 @@ func (r *userRepository) GetByID(id uint) (*models.User, error) {
 	var user models.User
 	err := r.db.First(&user, id).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
 		return nil, err
 	}
 	return &user, nil
@@ -39,9 +35,6 @@ func (r *userRepository) GetByEmail(email string) (*models.User, error) {
 	var user models.User
 	err := r.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
 		return nil, err
 	}
 	return &user, nil
@@ -52,20 +45,17 @@ func (r *userRepository) GetByUsername(username string) (*models.User, error) {
 	var user models.User
 	err := r.db.Where("username = ?", username).First(&user).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
 		return nil, err
 	}
 	return &user, nil
 }
 
-// Update updates user information
+// Update updates user
 func (r *userRepository) Update(user *models.User) error {
 	return r.db.Save(user).Error
 }
 
-// Delete soft deletes a user
+// Delete soft deletes user
 func (r *userRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
 }
