@@ -41,7 +41,7 @@ services:
       - DB_NAME=social_media
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=your-super-secret-jwt-key
+      - JWT_SECRET=520da3d8c22c063582f82383eaa5b66b5b412df8869495e386a05b4c8b710d8c
     depends_on:
       - postgres
       - redis

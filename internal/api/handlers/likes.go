@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// var followService *services.FollowService
 var like_service *services.LikeService
 
 func LikePost(c *gin.Context) {

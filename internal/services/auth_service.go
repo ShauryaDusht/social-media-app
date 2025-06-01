@@ -14,7 +14,6 @@ type AuthService struct {
 	config   *config.Config
 }
 
-// NewAuthService creates a new auth service
 func NewAuthService(userRepo repository.UserRepository, cfg *config.Config) *AuthService {
 	return &AuthService{
 		userRepo: userRepo,
@@ -22,7 +21,6 @@ func NewAuthService(userRepo repository.UserRepository, cfg *config.Config) *Aut
 	}
 }
 
-// Register registers a new user
 func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginResponse, error) {
 	if err := s.validateRegisterRequest(req); err != nil {
 		return nil, err
@@ -79,7 +77,6 @@ func (s *AuthService) Register(req models.RegisterRequest) (*models.LoginRespons
 	}, nil
 }
 
-// Login authenticates a user
 func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, error) {
 	if err := s.validateLoginRequest(req); err != nil {
 		return nil, err
@@ -115,12 +112,10 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	}, nil
 }
 
-// ValidateToken validates a JWT token
 func (s *AuthService) ValidateToken(tokenString string) (*utils.JWTClaims, error) {
 	return utils.ValidateToken(tokenString, s.config.JWT.Secret)
 }
 
-// GetUserByID gets user by ID
 func (s *AuthService) GetUserByID(id uint) (*models.User, error) {
 	return s.userRepo.GetByID(id)
 }

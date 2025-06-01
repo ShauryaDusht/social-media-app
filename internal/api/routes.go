@@ -39,6 +39,11 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 		{
 			auth.POST("/register", handlers.Register)
 			auth.POST("/login", handlers.Login)
+			auth.GET("/login", func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{
+					"message": "Please use POST method for login",
+				})
+			})
 			auth.POST("/logout", handlers.Logout)
 		}
 

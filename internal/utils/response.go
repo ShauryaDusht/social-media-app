@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// APIResponse represents a standard API response
 type APIResponse struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message"`
@@ -14,7 +13,6 @@ type APIResponse struct {
 	Error   string      `json:"error,omitempty"`
 }
 
-// SuccessResponse sends a successful response
 func SuccessResponse(c *gin.Context, statusCode int, message string, data interface{}) {
 	c.JSON(statusCode, APIResponse{
 		Success: true,
@@ -23,7 +21,6 @@ func SuccessResponse(c *gin.Context, statusCode int, message string, data interf
 	})
 }
 
-// ErrorResponse sends an error response
 func ErrorResponse(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, APIResponse{
 		Success: false,
@@ -32,7 +29,6 @@ func ErrorResponse(c *gin.Context, statusCode int, message string) {
 	})
 }
 
-// ValidationErrorResponse sends a validation error response
 func ValidationErrorResponse(c *gin.Context, errors []string) {
 	c.JSON(http.StatusBadRequest, APIResponse{
 		Success: false,
@@ -41,7 +37,6 @@ func ValidationErrorResponse(c *gin.Context, errors []string) {
 	})
 }
 
-// joinErrors joins multiple error messages
 func joinErrors(errors []string) string {
 	if len(errors) == 0 {
 		return ""
@@ -54,7 +49,6 @@ func joinErrors(errors []string) string {
 	return result
 }
 
-// PaginationResponse represents paginated response
 type PaginationResponse struct {
 	Data       interface{} `json:"data"`
 	Page       int         `json:"page"`
@@ -63,7 +57,6 @@ type PaginationResponse struct {
 	TotalPages int         `json:"total_pages"`
 }
 
-// PaginatedResponse sends a paginated response
 func PaginatedResponse(c *gin.Context, data interface{}, page, limit int, total int64) {
 	totalPages := int((total + int64(limit) - 1) / int64(limit))
 

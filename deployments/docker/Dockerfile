@@ -21,9 +21,14 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
-# Copy static files
+# Copy static files and configuration
 COPY --from=builder /app/web ./web
+COPY --from=builder /app/.env ./
+
+# Create a symbolic link to ensure .env is found in multiple locations
+RUN ln -sf /root/.env /root/web/.env
 
 EXPOSE 8080
 
-CMD ["./main"]
+# Print directory contents and env file for debugging
+CMD ["sh", "-c", "ls -la && cat .env && ./main"]

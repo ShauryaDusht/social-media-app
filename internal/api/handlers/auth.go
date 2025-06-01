@@ -15,10 +15,14 @@ import (
 
 var authService *services.AuthService
 
-func init() {
-	cfg := config.Load()
-	userRepo := repository.NewUserRepository(database.GetDB())
-	authService = services.NewAuthService(userRepo, cfg)
+// Initialize the auth service lazily to ensure database is connected
+func getAuthService() *services.AuthService {
+	if authService == nil {
+		cfg := config.Load()
+		userRepo := repository.NewUserRepository(database.GetDB())
+		authService = services.NewAuthService(userRepo, cfg)
+	}
+	return authService
 }
 func Register(c *gin.Context) {
 	var req models.RegisterRequest
@@ -28,7 +32,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	response, err := authService.Register(req)
+	response, err := getAuthService().Register(req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -44,7 +48,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	response, err := authService.Login(req)
+	response, err := getAuthService().Login(req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return

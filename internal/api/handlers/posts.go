@@ -2,45 +2,163 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
+	"social-media-app/internal/models"
+	"social-media-app/internal/services"
 	"social-media-app/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-// TODO
+var postService *services.PostService
 
-// Gets all posts/timeline
+func InitPostHandler(service *services.PostService) {
+	postService = service
+}
+
+func parseLimitOffset(c *gin.Context) (int, int) {
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+	return limit, offset
+}
+
 func GetPosts(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Get posts endpoint not implemented yet")
+	_, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	limit, offset := parseLimitOffset(c)
+	posts, err := postService.GetAll(limit, offset)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Posts retrieved successfully", posts)
 }
 
-// Creates a new post
 func CreatePost(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Create post endpoint not implemented yet")
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	var post models.CreatePostRequest
+	if err := c.BindJSON(&post); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	err := postService.CreatePost(userID.(uint), post.Content, post.ImageURL)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusCreated, "Post created successfully", nil)
 }
 
-// Gets a specific post
 func GetPostByID(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Get post by ID endpoint not implemented yet")
+	postIDParam := c.Param("id")
+	postID, err := strconv.ParseUint(postIDParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
+
+	post, err := postService.GetByID(uint(postID))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "Post not found")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Post retrieved successfully", post)
 }
 
-// Updates a post
 func UpdatePost(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Update post endpoint not implemented yet")
+	postIDParam := c.Param("id")
+	postID, err := strconv.ParseUint(postIDParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
+
+	var post models.UpdatePostRequest
+	if err := c.BindJSON(&post); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	err = postService.Update(&models.Post{ID: uint(postID), Content: post.Content, ImageURL: post.ImageURL})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Post updated successfully", nil)
 }
 
-// Deletes a post
 func DeletePost(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Delete post endpoint not implemented yet")
+	postIDParam := c.Param("id")
+	postID, err := strconv.ParseUint(postIDParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
+
+	err = postService.Delete(uint(postID))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Post deleted successfully", nil)
 }
 
-// Gets posts by a specific user
 func GetUserPosts(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Get user posts endpoint not implemented yet")
+	userIDParam := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	limit, offset := parseLimitOffset(c)
+	posts, err := postService.GetByUserID(uint(userID), limit, offset)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "User posts retrieved successfully", posts)
 }
 
-// Gets personalized timeline
 func GetTimeline(c *gin.Context) {
-	utils.ErrorResponse(c, http.StatusNotImplemented, "Get timeline endpoint not implemented yet")
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	limit, offset := parseLimitOffset(c)
+	posts, err := postService.GetTimeline(userID.(uint), limit, offset)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Timeline retrieved successfully", posts)
 }

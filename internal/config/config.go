@@ -50,9 +50,25 @@ type RateLimitConfig struct {
 }
 
 func Load() *Config {
-	// Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
+	envPaths := []string{
+		".env",
+		"../.env",
+	}
+
+	envLoaded := false
+	for _, path := range envPaths {
+		err := godotenv.Load(path)
+		if err == nil {
+			log.Printf("Loaded .env file from %s", path)
+			envLoaded = true
+			break
+		} else {
+			log.Printf("No .env file found at %s, error: %v", path, err)
+		}
+	}
+
+	if !envLoaded {
+		log.Println("No .env file found at any location, using environment variables")
 	}
 
 	// Parse JWT expiry
@@ -85,7 +101,7 @@ func Load() *Config {
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
 			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
+			Password: getEnv("REDIS_PASSWORD", "password123"),
 			DB:       0,
 		},
 		JWT: JWTConfig{
@@ -110,9 +126,7 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
 func generateSecureJWTSecret() string {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Error loading .env file: %v", err)
-	}
 	return os.Getenv("JWT_SECRET")
 }

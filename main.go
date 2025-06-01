@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"social-media-app/internal/api"
 	"social-media-app/internal/config"
@@ -9,6 +11,20 @@ import (
 )
 
 func main() {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Println("Error getting current working directory:", err)
+	} else {
+		log.Println("Current working directory:", cwd)
+
+		envPath := filepath.Join(cwd, ".env")
+		if _, err := os.Stat(envPath); err == nil {
+			log.Println(".env file found at:", envPath)
+		} else {
+			log.Println(".env file not found at:", envPath, "Error:", err)
+		}
+	}
+
 	// Load configuration
 	cfg := config.Load()
 
