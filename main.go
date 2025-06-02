@@ -6,8 +6,11 @@ import (
 	"path/filepath"
 
 	"social-media-app/internal/api"
+	"social-media-app/internal/api/handlers"
 	"social-media-app/internal/config"
 	"social-media-app/internal/database"
+	"social-media-app/internal/repository"
+	"social-media-app/internal/services"
 )
 
 func main() {
@@ -24,9 +27,24 @@ func main() {
 			log.Println(".env file not found at:", envPath, "Error:", err)
 		}
 	}
-
-	// Load configuration
+	// connect tot db
+	db := database.GetDB()
+	// load config
 	cfg := config.Load()
+
+	userRepo := repository.NewUserRepository(db)
+	postRepo := repository.NewPostRepository(db)
+	likeRepo := repository.NewLikeRepository(db)
+	followRepo := repository.NewFollowRepository(db)
+	cacheRepo := repository.NewCacheRepository(cfg)
+
+	postService := services.NewPostService(postRepo, likeRepo, cacheRepo)
+	likeService := services.NewLikeService(likeRepo, postRepo)
+	followService := services.NewFollowService(followRepo, userRepo, cacheRepo)
+
+	handlers.InitPostHandler(postService)
+	handlers.LikePost(likeService)
+	handlers.FollowUser(followService)
 
 	// Connect to database
 	if err := database.Connect(cfg); err != nil {
@@ -43,14 +61,12 @@ func main() {
 		log.Printf("Warning: Failed to add constraints: %v", err)
 	}
 
-	// Setup routes
+	// setup routes
 	router := api.SetupRoutes(cfg)
 
-	// Start server
-	serverAddr := cfg.Server.Host + ":" + cfg.Server.Port
-	log.Printf("Server starting on %s", serverAddr)
-
-	if err := router.Run(serverAddr); err != nil {
+	// start server
+	log.Printf("Server starting on %s:%s", cfg.Server.Host, cfg.Server.Port)
+	if err := router.Run(cfg.Server.Host + ":" + cfg.Server.Port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }
