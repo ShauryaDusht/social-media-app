@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts - Social Media App</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="navbar-brand">Social Media App</div>
+            <ul class="navbar-nav">
+                <li class="nav-item"><a href="/web/index.html" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/web/posts.html" class="nav-link active">Posts</a></li>
+                <li class="nav-item"><a href="/web/profile.html" class="nav-link">Profile</a></li>
+                <li class="nav-item"><a href="#" id="logout-link" class="nav-link">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="post-form-container">
+            <h2>Create a Post</h2>
+            <form id="post-form">
+                <div class="form-group">
+                    <textarea id="post-content" name="content" placeholder="What's on your mind?" required maxlength="1000"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image-url">Image URL (optional)</label>
+                    <input type="url" id="image-url" name="image_url">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Post</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="posts-container">
+            <h2>Recent Posts</h2>
+            <div id="posts-list" class="posts-list">
+                <!-- Posts will be loaded here dynamically -->
+                <div class="loading">Loading posts...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/auth-check.js"></script>
+    <script src="/static/js/posts.js"></script>
+</body>
+</html>

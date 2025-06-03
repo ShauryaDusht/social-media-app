@@ -12,6 +12,9 @@ import (
 
 var like_service *services.LikeService
 
+func InitLikeHandler(s *services.LikeService) {
+	like_service = s
+}
 func LikePost(c *gin.Context) {
 	postIDParam := c.Param("id")
 	postID, err := strconv.ParseUint(postIDParam, 10, 32)

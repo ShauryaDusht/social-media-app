@@ -5,24 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"social-media-app/internal/config"
-	"social-media-app/internal/database"
 	"social-media-app/internal/models"
-	"social-media-app/internal/repository"
 	"social-media-app/internal/services"
 	"social-media-app/internal/utils"
 )
 
 var authService *services.AuthService
 
-// Initialize the auth service lazily to ensure database is connected
-func getAuthService() *services.AuthService {
-	if authService == nil {
-		cfg := config.Load()
-		userRepo := repository.NewUserRepository(database.GetDB())
-		authService = services.NewAuthService(userRepo, cfg)
-	}
-	return authService
+// InitAuthHandler initializes the auth handler with the provided service
+func InitAuthHandler(service *services.AuthService) {
+	authService = service
 }
 func Register(c *gin.Context) {
 	var req models.RegisterRequest
@@ -32,7 +24,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	response, err := getAuthService().Register(req)
+	response, err := authService.Register(req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -48,7 +40,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	response, err := getAuthService().Login(req)
+	response, err := authService.Login(req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return

@@ -6,18 +6,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"social-media-app/internal/database"
 	"social-media-app/internal/models"
-	"social-media-app/internal/repository"
 	"social-media-app/internal/services"
 	"social-media-app/internal/utils"
 )
 
 var userService *services.UserService
 
-func init() {
-	userRepo := repository.NewUserRepository(database.GetDB())
-	userService = services.NewUserService(userRepo)
+// InitUserHandler initializes the user handler with the provided service
+func InitUserHandler(service *services.UserService) {
+	userService = service
 }
 
 func GetProfile(c *gin.Context) {

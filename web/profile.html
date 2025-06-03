@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Social Media App</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="navbar-brand">Social Media App</div>
+            <ul class="navbar-nav">
+                <li class="nav-item"><a href="/web/index.html" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/web/posts.html" class="nav-link">Posts</a></li>
+                <li class="nav-item"><a href="/web/profile.html" class="nav-link active">Profile</a></li>
+                <li class="nav-item"><a href="#" id="logout-link" class="nav-link">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img id="avatar" src="/static/img/default-avatar.png" alt="Profile Avatar">
+                </div>
+                <div class="profile-info">
+                    <h1 id="user-name">Loading...</h1>
+                    <p id="user-username">@username</p>
+                    <p id="user-bio">Bio information will appear here</p>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span id="posts-count">0</span> Posts
+                        </div>
+                        <div class="stat">
+                            <span id="followers-count">0</span> Followers
+                        </div>
+                        <div class="stat">
+                            <span id="following-count">0</span> Following
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="posts">Posts</button>
+                <button class="tab-btn" data-tab="edit-profile">Edit Profile</button>
+            </div>
+
+            <div class="tab-content" id="posts-tab">
+                <div id="user-posts" class="posts-list">
+                    <!-- User posts will be loaded here -->
+                    <div class="loading">Loading posts...</div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="edit-profile-tab">
+                <form id="edit-profile-form">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">Bio</label>
+                        <textarea id="bio" name="bio" maxlength="500"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="avatar">Avatar URL</label>
+                        <input type="url" id="avatar-url" name="avatar">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password (leave blank to keep current)</label>
+                        <input type="password" id="new-password" name="password" minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/auth-check.js"></script>
+    <script src="/static/js/profile.js"></script>
+</body>
+</html>

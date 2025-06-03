@@ -97,5 +97,24 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	// Serve static files (for uploaded images, CSS, JS)
 	router.Static("/static", "./web/static")
 
+	// Serve HTML files at root level
+	router.StaticFile("/", "./web/index.html")
+	router.StaticFile("/index.html", "./web/index.html")
+	router.StaticFile("/login", "./web/login.html")
+	router.StaticFile("/login.html", "./web/login.html")
+	router.StaticFile("/signup", "./web/signup.html")
+	router.StaticFile("/signup.html", "./web/signup.html")
+	router.StaticFile("/posts", "./web/posts.html")
+	router.StaticFile("/posts.html", "./web/posts.html")
+	router.StaticFile("/profile", "./web/profile.html")
+	router.StaticFile("/profile.html", "./web/profile.html")
+
+	// Maintain backward compatibility for /web/ paths
+	router.StaticFile("/web/login.html", "./web/login.html")
+	router.StaticFile("/web/signup.html", "./web/signup.html")
+	router.StaticFile("/web/posts.html", "./web/posts.html")
+	router.StaticFile("/web/profile.html", "./web/profile.html")
+	router.StaticFile("/web/index.html", "./web/index.html")
+
 	return router
 }

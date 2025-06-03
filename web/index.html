@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media App</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="navbar-brand">Social Media App</div>
+            <ul class="navbar-nav" id="nav-menu">
+                <!-- Navigation will be populated by JavaScript based on auth status -->
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Welcome to Social Media App</h1>
+            <p>Connect with friends, share your thoughts, and discover new content.</p>
+            <div class="hero-buttons" id="hero-buttons">
+                <!-- Buttons will be populated by JavaScript based on auth status -->
+            </div>
+        </div>
+
+        <div class="timeline-container" id="timeline-container">
+            <!-- Will be shown only for logged-in users -->
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Social Media App. All rights reserved.</p>
+    </footer>
+
+    <script src="/static/js/index.js"></script>
+</body>
+</html>

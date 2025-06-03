@@ -12,6 +12,9 @@ import (
 
 var followService *services.FollowService
 
+func InitFollowHandler(s *services.FollowService) {
+	followService = s
+}
 func FollowUser(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
