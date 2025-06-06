@@ -12,6 +12,7 @@ type UserRepository interface {
 	Delete(id uint) error
 	EmailExists(email string) (bool, error)
 	UsernameExists(username string) (bool, error)
+	SearchUsers(query string, limit, offset int) ([]models.User, error)
 }
 
 // PostRepository defines post database operations

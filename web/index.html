@@ -9,11 +9,21 @@
 <body>
     <header>
         <nav class="navbar">
-            <div class="navbar-brand">Social Media App</div>
-            <ul class="navbar-nav" id="nav-menu">
-                <!-- Navigation will be populated by JavaScript based on auth status -->
+        <div class="container">
+            <a href="/" class="navbar-brand">Social Media App</a>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search users..." class="search-input">
+                <button id="search-btn" class="search-btn">Search</button>
+                <div id="search-results" class="search-results"></div>
+            </div>
+            <ul class="navbar-nav">
+                <li class="nav-item"><a href="/" class="nav-link active">Home</a></li>
+                <li class="nav-item"><a href="/posts" class="nav-link">Posts</a></li>
+                <li class="nav-item"><a href="/profile" class="nav-link">Profile</a></li>
+                <li class="nav-item"><a href="#" class="nav-link" id="logout-link">Logout</a></li>
             </ul>
-        </nav>
+        </div>
+    </nav>
     </header>
 
     <div class="container">
@@ -34,6 +44,8 @@
         <p>&copy; 2023 Social Media App. All rights reserved.</p>
     </footer>
 
+    <script src="/static/js/auth-check.js"></script>
+    <script src="/static/js/search.js"></script>
     <script src="/static/js/index.js"></script>
 </body>
 </html>

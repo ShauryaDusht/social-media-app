@@ -9,26 +9,33 @@
 <body>
     <header>
         <nav class="navbar">
-            <div class="navbar-brand">Social Media App</div>
+        <div class="container">
+            <a href="/" class="navbar-brand">Social Media App</a>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search users..." class="search-input">
+                <button id="search-btn" class="search-btn">Search</button>
+                <div id="search-results" class="search-results"></div>
+            </div>
             <ul class="navbar-nav">
-                <li class="nav-item"><a href="/web/index.html" class="nav-link">Home</a></li>
-                <li class="nav-item"><a href="/web/posts.html" class="nav-link">Posts</a></li>
-                <li class="nav-item"><a href="/web/profile.html" class="nav-link active">Profile</a></li>
-                <li class="nav-item"><a href="#" id="logout-link" class="nav-link">Logout</a></li>
+                <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/posts" class="nav-link">Posts</a></li>
+                <li class="nav-item"><a href="/profile" class="nav-link active">Profile</a></li>
+                <li class="nav-item"><a href="#" class="nav-link" id="logout-link">Logout</a></li>
             </ul>
-        </nav>
+        </div>
+    </nav>
     </header>
 
     <div class="container">
         <div class="profile-container">
             <div class="profile-header">
                 <div class="profile-avatar">
-                    <img id="avatar" src="/static/img/default-avatar.png" alt="Profile Avatar">
+                    <img id="profile-avatar" src="/static/img/default-avatar.png" alt="Profile Avatar">
                 </div>
                 <div class="profile-info">
-                    <h1 id="user-name">Loading...</h1>
-                    <p id="user-username">@username</p>
-                    <p id="user-bio">Bio information will appear here</p>
+                    <h1 id="profile-name">Loading...</h1>
+                    <p id="profile-username">@username</p>
+                    <p id="profile-bio">Loading bio...</p>
                     <div class="profile-stats">
                         <div class="stat">
                             <span id="posts-count">0</span> Posts
@@ -39,6 +46,9 @@
                         <div class="stat">
                             <span id="following-count">0</span> Following
                         </div>
+                    </div>
+                    <div id="follow-container" class="follow-container" style="display: none;">
+                        <button id="follow-btn" class="btn btn-primary" onclick="toggleFollow()">Follow</button>
                     </div>
                 </div>
             </div>
@@ -86,6 +96,8 @@
     </div>
 
     <script src="/static/js/auth-check.js"></script>
+    <script src="/static/js/search.js"></script>
+    <script src="/static/js/follows.js"></script>
     <script src="/static/js/profile.js"></script>
 </body>
 </html>

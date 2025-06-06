@@ -69,3 +69,18 @@ func (s *UserService) UpdateProfile(userID uint, req models.UpdateProfileRequest
 	response := user.ToResponse()
 	return &response, nil
 }
+
+// SearchUsers searches for users by name or username
+func (s *UserService) SearchUsers(query string, limit, offset int) ([]models.UserResponse, error) {
+	users, err := s.userRepo.SearchUsers(query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []models.UserResponse
+	for _, user := range users {
+		responses = append(responses, user.ToResponse())
+	}
+
+	return responses, nil
+}

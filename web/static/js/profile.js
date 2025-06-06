@@ -1,9 +1,17 @@
 // Base API URL
 const API_URL = '/api';
 
-// Get token and user from local storage
+// Get token from local storage
 const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user'));
+const currentUser = JSON.parse(localStorage.getItem('user'));
+const currentUserId = currentUser ? currentUser.id : null;
+
+// Get profile user ID from URL or use current user ID
+let profileUserId = currentUserId;
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('id')) {
+    profileUserId = parseInt(urlParams.get('id'));
+}
 
 // Initialize profile page
 async function initProfilePage() {
@@ -28,6 +36,12 @@ async function initProfilePage() {
     const editForm = document.getElementById('edit-profile-form');
     editForm.addEventListener('submit', updateProfile);
     
+    // Hide edit tab if viewing another user's profile
+    if (profileUserId !== currentUserId) {
+        document.querySelector('[data-tab="edit"]').style.display = 'none';
+        document.getElementById('follow-container').style.display = 'block';
+    }
+    
     // Load profile data
     await loadProfile();
     
@@ -38,7 +52,12 @@ async function initProfilePage() {
 // Load profile data
 async function loadProfile() {
     try {
-        const response = await fetch(`${API_URL}/users/profile`, {
+        let url = `${API_URL}/users/profile`;
+        if (profileUserId !== currentUserId) {
+            url = `${API_URL}/users/${profileUserId}`;
+        }
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -63,11 +82,13 @@ async function loadProfile() {
             document.getElementById('avatar').src = profile.avatar;
         }
         
-        // Populate edit form
-        document.getElementById('first_name').value = profile.first_name;
-        document.getElementById('last_name').value = profile.last_name;
-        document.getElementById('bio').value = profile.bio || '';
-        document.getElementById('avatar-url').value = profile.avatar || '';
+        // Populate edit form if it's the current user's profile
+        if (profileUserId === currentUserId) {
+            document.getElementById('first_name').value = profile.first_name;
+            document.getElementById('last_name').value = profile.last_name;
+            document.getElementById('bio').value = profile.bio || '';
+            document.getElementById('avatar-url').value = profile.avatar || '';
+        }
         
         // Load followers and following counts
         await loadFollowStats(profile.id);
@@ -106,13 +127,24 @@ async function loadFollowStats(userId) {
             throw new Error(followingData.error || 'Failed to load following');
         }
         
-        // Update counts
+        // Update stats display
         document.getElementById('followers-count').textContent = followersData.data.length;
         document.getElementById('following-count').textContent = followingData.data.length;
+        
+        // Check if current user is following this profile
+        if (profileUserId !== currentUserId) {
+            const isFollowing = followersData.data.some(follow => follow.user.id === currentUserId);
+            // Use the updateFollowButton function from follows.js
+            if (typeof updateFollowButton === 'function') {
+                updateFollowButton(isFollowing);
+            }
+        }
     } catch (error) {
         console.error('Error loading follow stats:', error);
     }
 }
+
+// These functions have been moved to follows.js
 
 // Load user posts
 async function loadUserPosts() {

@@ -57,6 +57,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 				users.GET("/profile", handlers.GetProfile)
 				users.PUT("/profile", handlers.UpdateProfile)
 				users.GET("/:id", handlers.GetUserByID)
+				users.GET("/search", handlers.SearchUsers)
 			}
 
 			// Post routes

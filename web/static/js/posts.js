@@ -11,8 +11,17 @@ async function initPostsPage() {
     const postForm = document.getElementById('post-form');
     postForm.addEventListener('submit', createPost);
     
-    // Load posts
-    await loadPosts();
+    // Set up tab switching
+    const timelineTab = document.getElementById('timeline-tab');
+    const allPostsTab = document.getElementById('all-posts-tab');
+    
+    if (timelineTab && allPostsTab) {
+        timelineTab.addEventListener('click', () => switchTab('timeline'));
+        allPostsTab.addEventListener('click', () => switchTab('all-posts'));
+    }
+    
+    // Load timeline by default
+    await loadTimeline();
 }
 
 // Create a new post
@@ -44,16 +53,71 @@ async function createPost(e) {
         document.getElementById('post-content').value = '';
         document.getElementById('image-url').value = '';
         
-        // Reload posts
-        await loadPosts();
+        // Reload current tab
+        const timelineTab = document.getElementById('timeline-tab');
+        if (timelineTab && timelineTab.classList.contains('active')) {
+            await loadTimeline();
+        } else {
+            await loadAllPosts();
+        }
     } catch (error) {
         console.error('Error creating post:', error);
         alert(error.message);
     }
 }
 
-// Load posts
-async function loadPosts() {
+// Switch between timeline and all posts tabs
+function switchTab(tab) {
+    const timelineTab = document.getElementById('timeline-tab');
+    const allPostsTab = document.getElementById('all-posts-tab');
+    
+    if (tab === 'timeline') {
+        timelineTab.classList.add('active');
+        allPostsTab.classList.remove('active');
+        loadTimeline();
+    } else {
+        allPostsTab.classList.add('active');
+        timelineTab.classList.remove('active');
+        loadAllPosts();
+    }
+}
+
+// Load timeline posts
+async function loadTimeline() {
+    const postsContainer = document.getElementById('posts-list');
+    postsContainer.innerHTML = '<div class="loading">Loading timeline...</div>';
+    
+    try {
+        const response = await fetch(`${API_URL}/timeline`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load timeline');
+        }
+        
+        if (data.data.length === 0) {
+            postsContainer.innerHTML = '<p>Your timeline is empty. Follow some users to see their posts!</p>';
+            return;
+        }
+        
+        // Render posts
+        postsContainer.innerHTML = '';
+        data.data.forEach(post => {
+            postsContainer.appendChild(createPostElement(post));
+        });
+    } catch (error) {
+        console.error('Error loading timeline:', error);
+        postsContainer.innerHTML = `<p>Error loading timeline: ${error.message}</p>`;
+    }
+}
+
+// Load all posts
+async function loadAllPosts() {
     const postsContainer = document.getElementById('posts-list');
     postsContainer.innerHTML = '<div class="loading">Loading posts...</div>';
     
@@ -137,8 +201,13 @@ async function toggleLike(postId, isLiked) {
             throw new Error(data.error || 'Failed to toggle like');
         }
         
-        // Reload posts to update like count
-        await loadPosts();
+        // Reload current tab
+        const timelineTab = document.getElementById('timeline-tab');
+        if (timelineTab && timelineTab.classList.contains('active')) {
+            await loadTimeline();
+        } else {
+            await loadAllPosts();
+        }
     } catch (error) {
         console.error('Error toggling like:', error);
         alert(error.message);
@@ -164,8 +233,13 @@ async function deletePost(postId) {
             throw new Error(data.error || 'Failed to delete post');
         }
         
-        // Reload posts
-        await loadPosts();
+        // Reload current tab
+        const timelineTab = document.getElementById('timeline-tab');
+        if (timelineTab && timelineTab.classList.contains('active')) {
+            await loadTimeline();
+        } else {
+            await loadAllPosts();
+        }
     } catch (error) {
         console.error('Error deleting post:', error);
         alert(error.message);
@@ -194,8 +268,13 @@ async function editPost(postId) {
             throw new Error(data.error || 'Failed to update post');
         }
         
-        // Reload posts
-        await loadPosts();
+        // Reload current tab
+        const timelineTab = document.getElementById('timeline-tab');
+        if (timelineTab && timelineTab.classList.contains('active')) {
+            await loadTimeline();
+        } else {
+            await loadAllPosts();
+        }
     } catch (error) {
         console.error('Error updating post:', error);
         alert(error.message);

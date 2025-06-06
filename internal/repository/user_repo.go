@@ -73,3 +73,12 @@ func (r *userRepository) UsernameExists(username string) (bool, error) {
 	err := r.db.Model(&models.User{}).Where("username = ?", username).Count(&count).Error
 	return count > 0, err
 }
+
+// SearchUsers searches for users by name or username
+func (r *userRepository) SearchUsers(query string, limit, offset int) ([]models.User, error) {
+	var users []models.User
+	err := r.db.Where("username LIKE ? OR first_name LIKE ? OR last_name LIKE ?",
+		"%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Limit(limit).Offset(offset).Find(&users).Error
+	return users, err
+}

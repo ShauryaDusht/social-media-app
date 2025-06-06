@@ -72,3 +72,37 @@ func GetUserByID(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "User retrieved successfully", profile)
 }
+
+func SearchUsers(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	query := c.Query("q")
+	if query == "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Search query is required")
+		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	users, err := userService.SearchUsers(query, limit, offset)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to search users")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Users retrieved successfully", users)
+}
