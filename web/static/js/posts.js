@@ -1,285 +1,128 @@
-// Base API URL
-const API_URL = '/api';
+// Check if API_URL is already defined to avoid redeclaration errors
+if (typeof API_URL === 'undefined') {
+    var API_URL = '/api';
+}
 
-// Get token from local storage
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user'));
+// Check if these variables are already defined
+if (typeof token === 'undefined') {
+    var token = localStorage.getItem('token');
+}
+if (typeof user === 'undefined') {
+    var user = JSON.parse(localStorage.getItem('user'));
+}
+
+console.log('🔧 DEBUG: Posts.js loaded');
+console.log('Token exists:', !!token);
+console.log('User data:', user);
 
 // Initialize posts page
 async function initPostsPage() {
-    // Set up post form submission
-    const postForm = document.getElementById('post-form');
-    postForm.addEventListener('submit', createPost);
+    console.log('🔧 DEBUG: Initializing posts page');
     
-    // Set up tab switching
-    const timelineTab = document.getElementById('timeline-tab');
-    const allPostsTab = document.getElementById('all-posts-tab');
-    
-    if (timelineTab && allPostsTab) {
-        timelineTab.addEventListener('click', () => switchTab('timeline'));
-        allPostsTab.addEventListener('click', () => switchTab('all-posts'));
+    // Check if user is logged in
+    if (!token) {
+        console.log('🔧 DEBUG: No token found, redirecting to login');
+        alert('Please login to create posts');
+        window.location.href = '/login';
+        return;
     }
     
-    // Load timeline by default
-    await loadTimeline();
+    // Set up post form submission
+    const postForm = document.getElementById('post-form');
+    if (!postForm) {
+        console.log('🔧 DEBUG: post-form element not found');
+        return;
+    }
+    
+    console.log('🔧 DEBUG: Setting up post form event listener');
+    postForm.addEventListener('submit', createPost);
 }
 
 // Create a new post
 async function createPost(e) {
+    console.log('🔧 DEBUG: Creating new post');
     e.preventDefault();
-    const content = document.getElementById('post-content').value;
-    const imageUrl = document.getElementById('image-url').value;
+    
+    const contentElement = document.getElementById('post-content');
+    const imageUrlElement = document.getElementById('image-url');
+    
+    if (!contentElement) {
+        console.log('🔧 DEBUG: post-content element not found');
+        return;
+    }
+    
+    const content = contentElement.value;
+    const imageUrl = imageUrlElement ? imageUrlElement.value : '';
+    
+    console.log('🔧 DEBUG: Post data:');
+    console.log('- Content:', content);
+    console.log('- Image URL:', imageUrl);
+    
+    if (!content.trim()) {
+        console.log('🔧 DEBUG: Content is empty');
+        alert('Please enter some content for your post');
+        return;
+    }
     
     try {
+        console.log('🔧 DEBUG: Making API request to create post');
+        console.log('API URL:', `${API_URL}/posts`);
+        
+        const requestBody = {
+            content: content.trim(),
+            image_url: imageUrl.trim() || null
+        };
+        
+        console.log('🔧 DEBUG: Request body:', requestBody);
+        
         const response = await fetch(`${API_URL}/posts`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                content,
-                image_url: imageUrl
-            })
+            body: JSON.stringify(requestBody)
         });
         
+        console.log('🔧 DEBUG: Create post response:');
+        console.log('- Status:', response.status);
+        console.log('- OK:', response.ok);
+        
         const data = await response.json();
+        console.log('🔧 DEBUG: Response data:', data);
         
         if (!response.ok) {
             throw new Error(data.error || 'Failed to create post');
         }
         
         // Clear form
-        document.getElementById('post-content').value = '';
-        document.getElementById('image-url').value = '';
+        console.log('🔧 DEBUG: Clearing form');
+        contentElement.value = '';
+        if (imageUrlElement) {
+            imageUrlElement.value = '';
+        }
         
-        // Reload current tab
-        const timelineTab = document.getElementById('timeline-tab');
-        if (timelineTab && timelineTab.classList.contains('active')) {
-            await loadTimeline();
-        } else {
-            await loadAllPosts();
+        // Show success message
+        console.log('🔧 DEBUG: Post created successfully');
+        alert('Post created successfully!');
+        
+        // Optionally redirect to home page to see the post
+        if (confirm('Post created! Do you want to go to the home page to see it?')) {
+            console.log('🔧 DEBUG: Redirecting to home page');
+            window.location.href = '/';
         }
     } catch (error) {
-        console.error('Error creating post:', error);
-        alert(error.message);
-    }
-}
-
-// Switch between timeline and all posts tabs
-function switchTab(tab) {
-    const timelineTab = document.getElementById('timeline-tab');
-    const allPostsTab = document.getElementById('all-posts-tab');
-    
-    if (tab === 'timeline') {
-        timelineTab.classList.add('active');
-        allPostsTab.classList.remove('active');
-        loadTimeline();
-    } else {
-        allPostsTab.classList.add('active');
-        timelineTab.classList.remove('active');
-        loadAllPosts();
-    }
-}
-
-// Load timeline posts
-async function loadTimeline() {
-    const postsContainer = document.getElementById('posts-list');
-    postsContainer.innerHTML = '<div class="loading">Loading timeline...</div>';
-    
-    try {
-        const response = await fetch(`${API_URL}/timeline`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load timeline');
-        }
-        
-        if (data.data.length === 0) {
-            postsContainer.innerHTML = '<p>Your timeline is empty. Follow some users to see their posts!</p>';
-            return;
-        }
-        
-        // Render posts
-        postsContainer.innerHTML = '';
-        data.data.forEach(post => {
-            postsContainer.appendChild(createPostElement(post));
-        });
-    } catch (error) {
-        console.error('Error loading timeline:', error);
-        postsContainer.innerHTML = `<p>Error loading timeline: ${error.message}</p>`;
-    }
-}
-
-// Load all posts
-async function loadAllPosts() {
-    const postsContainer = document.getElementById('posts-list');
-    postsContainer.innerHTML = '<div class="loading">Loading posts...</div>';
-    
-    try {
-        const response = await fetch(`${API_URL}/posts`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load posts');
-        }
-        
-        if (data.data.length === 0) {
-            postsContainer.innerHTML = '<p>No posts yet. Be the first to post!</p>';
-            return;
-        }
-        
-        // Render posts
-        postsContainer.innerHTML = '';
-        data.data.forEach(post => {
-            postsContainer.appendChild(createPostElement(post));
-        });
-    } catch (error) {
-        console.error('Error loading posts:', error);
-        postsContainer.innerHTML = `<p>Error loading posts: ${error.message}</p>`;
-    }
-}
-
-// Create post element
-function createPostElement(post) {
-    const postElement = document.createElement('div');
-    postElement.className = 'post-card';
-    postElement.dataset.id = post.id;
-    
-    const isLiked = post.is_liked;
-    const isOwnPost = post.user.id === user.id;
-    
-    postElement.innerHTML = `
-        <div class="post-header">
-            <img src="${post.user.avatar || '/static/img/default-avatar.png'}" alt="${post.user.username}" class="post-avatar">
-            <span class="post-user">${post.user.first_name} ${post.user.last_name}</span>
-            <span class="post-time">${new Date(post.created_at).toLocaleString()}</span>
-        </div>
-        <div class="post-content">${post.content}</div>
-        ${post.image_url ? `<img src="${post.image_url}" alt="Post image" class="post-image">` : ''}
-        <div class="post-actions">
-            <div class="post-action ${isLiked ? 'liked' : ''}" onclick="toggleLike(${post.id}, ${isLiked})">
-                ❤ <span class="like-count">${post.like_count}</span> Likes
-            </div>
-            ${isOwnPost ? `
-                <div class="post-action" onclick="editPost(${post.id})">✏️ Edit</div>
-                <div class="post-action" onclick="deletePost(${post.id})">🗑️ Delete</div>
-            ` : ''}
-        </div>
-    `;
-    
-    return postElement;
-}
-
-// Toggle like on a post
-async function toggleLike(postId, isLiked) {
-    try {
-        const method = isLiked ? 'DELETE' : 'POST';
-        const url = isLiked ? `${API_URL}/likes/${postId}` : `${API_URL}/likes`;
-        
-        const response = await fetch(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: isLiked ? null : JSON.stringify({ post_id: postId })
-        });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to toggle like');
-        }
-        
-        // Reload current tab
-        const timelineTab = document.getElementById('timeline-tab');
-        if (timelineTab && timelineTab.classList.contains('active')) {
-            await loadTimeline();
-        } else {
-            await loadAllPosts();
-        }
-    } catch (error) {
-        console.error('Error toggling like:', error);
-        alert(error.message);
-    }
-}
-
-// Delete a post
-async function deletePost(postId) {
-    if (!confirm('Are you sure you want to delete this post?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/posts/${postId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to delete post');
-        }
-        
-        // Reload current tab
-        const timelineTab = document.getElementById('timeline-tab');
-        if (timelineTab && timelineTab.classList.contains('active')) {
-            await loadTimeline();
-        } else {
-            await loadAllPosts();
-        }
-    } catch (error) {
-        console.error('Error deleting post:', error);
-        alert(error.message);
-    }
-}
-
-// Edit a post (simplified - in a real app, you'd use a modal or inline editing)
-async function editPost(postId) {
-    const newContent = prompt('Edit your post:');
-    if (newContent === null) return; // User cancelled
-    
-    try {
-        const response = await fetch(`${API_URL}/posts/${postId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                content: newContent
-            })
-        });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to update post');
-        }
-        
-        // Reload current tab
-        const timelineTab = document.getElementById('timeline-tab');
-        if (timelineTab && timelineTab.classList.contains('active')) {
-            await loadTimeline();
-        } else {
-            await loadAllPosts();
-        }
-    } catch (error) {
-        console.error('Error updating post:', error);
+        console.error('🔧 DEBUG: Error creating post:', error);
+        console.error('🔧 DEBUG: Error stack:', error.stack);
         alert(error.message);
     }
 }
 
 // Initialize on page load
-initPostsPage();
+console.log('🔧 DEBUG: Setting up posts page initialization');
+// Wait for DOM to be ready before initializing
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPostsPage);
+} else {
+    initPostsPage();
+}

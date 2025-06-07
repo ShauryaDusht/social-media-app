@@ -5,10 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - Social Media App</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+.posts-list, .post-card {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+</style>
 </head>
 <body>
     <header>
-        <nav class="navbar">
+       <nav class="navbar">
         <div class="container">
             <a href="/" class="navbar-brand">Social Media App</a>
             <div class="search-container">
@@ -18,8 +25,8 @@
             </div>
             <ul class="navbar-nav">
                 <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
-                <li class="nav-item"><a href="/posts" class="nav-link">Posts</a></li>
-                <li class="nav-item"><a href="/profile" class="nav-link active">Profile</a></li>
+                <li class="nav-item"><a href="/posts" class="nav-link active">Create Post</a></li>
+                <li class="nav-item"><a href="/profile" class="nav-link">Profile</a></li>
                 <li class="nav-item"><a href="#" class="nav-link" id="logout-link">Logout</a></li>
             </ul>
         </div>
@@ -60,12 +67,11 @@
 
             <div class="tab-content" id="posts-tab">
                 <div id="user-posts" class="posts-list">
-                    <!-- User posts will be loaded here -->
-                    <div class="loading">Loading posts...</div>
+                    posts should be generate there
                 </div>
             </div>
 
-            <div class="tab-content hidden" id="edit-profile-tab">
+            <div class="tab-content" id="edit-profile-tab">
                 <form id="edit-profile-form">
                     <div class="form-group">
                         <label for="first_name">First Name</label>
@@ -99,5 +105,7 @@
     <script src="/static/js/search.js"></script>
     <script src="/static/js/follows.js"></script>
     <script src="/static/js/profile.js"></script>
+    <script src="/static/js/posts.js"></script>
+    
 </body>
 </html>

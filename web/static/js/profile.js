@@ -1,60 +1,66 @@
-// Base API URL
 const API_URL = '/api';
 
-// Get token from local storage
 const token = localStorage.getItem('token');
 const currentUser = JSON.parse(localStorage.getItem('user'));
 const currentUserId = currentUser ? currentUser.id : null;
 
-// Get profile user ID from URL or use current user ID
 let profileUserId = currentUserId;
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('id')) {
     profileUserId = parseInt(urlParams.get('id'));
 }
 
-// Initialize profile page
+
 async function initProfilePage() {
-    // Set up tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Remove active class from all buttons and hide all content
             tabButtons.forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
+            tabContents.forEach(content => {
+                content.style.display = 'none';
             });
             
-            // Add active class to clicked button and show corresponding content
             button.classList.add('active');
             const tabId = button.dataset.tab;
-            document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+            const tabElement = document.getElementById(`${tabId}-tab`);
+            
+            if (tabElement) {
+                tabElement.style.display = 'block';
+            }
         });
     });
     
-    // Set up profile edit form
-    const editForm = document.getElementById('edit-profile-form');
-    editForm.addEventListener('submit', updateProfile);
+    document.getElementById('posts-tab').style.display = 'block';
+    document.getElementById('edit-profile-tab').style.display = 'none';
     
-    // Hide edit tab if viewing another user's profile
-    if (profileUserId !== currentUserId) {
-        document.querySelector('[data-tab="edit"]').style.display = 'none';
-        document.getElementById('follow-container').style.display = 'block';
+    const editForm = document.getElementById('edit-profile-form');
+    if (editForm) {
+        editForm.addEventListener('submit', updateProfile);
     }
     
-    // Load profile data
-    await loadProfile();
+    if (profileUserId !== currentUserId) {
+        const editTabBtn = document.querySelector('[data-tab="edit-profile"]');
+        if (editTabBtn) {
+            editTabBtn.style.display = 'none';
+        }
+        
+        const followContainer = document.getElementById('follow-container');
+        if (followContainer) {
+            followContainer.style.display = 'block';
+        }
+    }
     
-    // Load user posts
+    await loadProfile();
     await loadUserPosts();
 }
 
-// Load profile data
 async function loadProfile() {
     try {
-        let url = `${API_URL}/users/profile`;
+        let url = `/api/users/profile`;
         if (profileUserId !== currentUserId) {
-            url = `${API_URL}/users/${profileUserId}`;
+            url = `/api/users/${profileUserId}`;
         }
         
         const response = await fetch(url, {
@@ -63,145 +69,183 @@ async function loadProfile() {
             }
         });
         
-        // Check if response is empty
+        if (!response.ok) {
+            throw new Error('Failed to load profile');
+        }
+        
         const text = await response.text();
         const data = text ? JSON.parse(text) : {};
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load profile');
-        }
-        
         const profile = data.data;
         
-        // Update profile display
-        document.getElementById('user-name').textContent = `${profile.first_name} ${profile.last_name}`;
-        document.getElementById('user-username').textContent = `@${profile.username}`;
-        document.getElementById('user-bio').textContent = profile.bio || 'No bio yet';
+        const profileNameEl = document.getElementById('profile-name');
+        const profileUsernameEl = document.getElementById('profile-username');
+        const profileBioEl = document.getElementById('profile-bio');
+        const profileAvatarEl = document.getElementById('profile-avatar');
         
-        if (profile.avatar) {
-            document.getElementById('avatar').src = profile.avatar;
+        if (profileNameEl) {
+            profileNameEl.textContent = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+        }
+        if (profileUsernameEl) {
+            profileUsernameEl.textContent = `@${profile.username || 'unknown'}`;
+        }
+        if (profileBioEl) {
+            profileBioEl.textContent = profile.bio || 'No bio yet';
+        }
+        if (profileAvatarEl && profile.avatar) {
+            profileAvatarEl.src = profile.avatar;
         }
         
-        // Populate edit form if it's the current user's profile
         if (profileUserId === currentUserId) {
-            document.getElementById('first_name').value = profile.first_name;
-            document.getElementById('last_name').value = profile.last_name;
-            document.getElementById('bio').value = profile.bio || '';
-            document.getElementById('avatar-url').value = profile.avatar || '';
+            const firstNameEl = document.getElementById('first_name');
+            const lastNameEl = document.getElementById('last_name');
+            const bioEl = document.getElementById('bio');
+            const avatarUrlEl = document.getElementById('avatar-url');
+            
+            if (firstNameEl) firstNameEl.value = profile.first_name || '';
+            if (lastNameEl) lastNameEl.value = profile.last_name || '';
+            if (bioEl) bioEl.value = profile.bio || '';
+            if (avatarUrlEl) avatarUrlEl.value = profile.avatar || '';
         }
         
-        // Load followers and following counts
         await loadFollowStats(profile.id);
+        
     } catch (error) {
-        console.error('Error loading profile:', error);
         alert(`Error loading profile: ${error.message}`);
     }
 }
 
-// Load follow statistics
 async function loadFollowStats(userId) {
     try {
-        // Get followers
-        const followersResponse = await fetch(`${API_URL}/follows/followers/${userId}`, {
+        const followersResponse = await fetch(`/api/follows/followers/${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
-        const followersData = await followersResponse.json();
-        
-        if (!followersResponse.ok) {
-            throw new Error(followersData.error || 'Failed to load followers');
+        let followersData = { data: [] };
+        if (followersResponse.ok) {
+            const followersText = await followersResponse.text();
+            if (followersText) {
+                followersData = JSON.parse(followersText);
+            }
         }
         
-        // Get following
-        const followingResponse = await fetch(`${API_URL}/follows/following/${userId}`, {
+        const followingResponse = await fetch(`/api/follows/following/${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
-        const followingData = await followingResponse.json();
-        
-        if (!followingResponse.ok) {
-            throw new Error(followingData.error || 'Failed to load following');
+        let followingData = { data: [] };
+        if (followingResponse.ok) {
+            const followingText = await followingResponse.text();
+            if (followingText) {
+                followingData = JSON.parse(followingText);
+            }
         }
         
-        // Update stats display
-        document.getElementById('followers-count').textContent = followersData.data.length;
-        document.getElementById('following-count').textContent = followingData.data.length;
+        const followersCountEl = document.getElementById('followers-count');
+        const followingCountEl = document.getElementById('following-count');
         
-        // Check if current user is following this profile
-        if (profileUserId !== currentUserId) {
-            const isFollowing = followersData.data.some(follow => follow.user.id === currentUserId);
-            // Use the updateFollowButton function from follows.js
+        const followersCount = followersData.data ? followersData.data.length : 0;
+        const followingCount = followingData.data ? followingData.data.length : 0;
+        
+        if (followersCountEl) followersCountEl.textContent = followersCount;
+        if (followingCountEl) followingCountEl.textContent = followingCount;
+        
+        if (profileUserId !== currentUserId && currentUserId) {
+            const isFollowing = followersData.data && followersData.data.some(follow => 
+                follow.user && follow.user.id === currentUserId
+            );
+            
             if (typeof updateFollowButton === 'function') {
                 updateFollowButton(isFollowing);
             }
         }
+        
     } catch (error) {
-        console.error('Error loading follow stats:', error);
+        const followersCountEl = document.getElementById('followers-count');
+        const followingCountEl = document.getElementById('following-count');
+        
+        if (followersCountEl) followersCountEl.textContent = '0';
+        if (followingCountEl) followingCountEl.textContent = '0';
     }
 }
 
-// These functions have been moved to follows.js
-
-// Load user posts
 async function loadUserPosts() {
     const postsContainer = document.getElementById('user-posts');
+    if (!postsContainer) {
+        return;
+    }
+    
     postsContainer.innerHTML = '<div class="loading">Loading posts...</div>';
     
     try {
-        const response = await fetch(`${API_URL}/posts/user/${user.id}`, {
+        const response = await fetch(`/api/posts/user/${profileUserId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
-        const data = await response.json();
-        
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to load posts');
+            throw new Error('Failed to load posts');
         }
         
-        // Update posts count
-        document.getElementById('posts-count').textContent = data.data.length;
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : { data: [] };
+        const posts = data.data || [];
         
-        if (data.data.length === 0) {
+        const postsCountEl = document.getElementById('posts-count');
+        if (postsCountEl) {
+            postsCountEl.textContent = posts.length;
+        }
+        
+        if (posts.length === 0) {
             postsContainer.innerHTML = '<p>No posts yet.</p>';
             return;
         }
         
-        // Render posts
         postsContainer.innerHTML = '';
-        data.data.forEach(post => {
+        posts.forEach(post => {
             const postElement = document.createElement('div');
             postElement.className = 'post-card';
             
+            const isOwnPost = currentUserId && post.user && post.user.id === currentUserId;
+            
+            let dateString = 'Unknown date';
+            try {
+                if (post.created_at) {
+                    dateString = new Date(post.created_at).toLocaleString();
+                }
+            } catch (e) {
+                dateString = 'Unknown date';
+            }
+            
             postElement.innerHTML = `
                 <div class="post-header">
-                    <span class="post-time">${new Date(post.created_at).toLocaleString()}</span>
+                    <span class="post-time">${dateString}</span>
                 </div>
-                <div class="post-content">${post.content}</div>
+                <div class="post-content">${post.content || 'No content'}</div>
                 ${post.image_url ? `<img src="${post.image_url}" alt="Post image" class="post-image">` : ''}
                 <div class="post-actions">
                     <div class="post-action">
-                        ❤ ${post.like_count} Likes
+                        ❤ ${post.like_count || 0} Likes
                     </div>
-                    <div class="post-action" onclick="editPost(${post.id})">✏️ Edit</div>
-                    <div class="post-action" onclick="deletePost(${post.id})">🗑️ Delete</div>
+                    ${isOwnPost ? `
+                        <div class="post-action" onclick="editPost(${post.id})">✏️ Edit</div>
+                        <div class="post-action" onclick="deletePost(${post.id})">🗑️ Delete</div>
+                    ` : ''}
                 </div>
             `;
             
             postsContainer.appendChild(postElement);
         });
+        
     } catch (error) {
-        console.error('Error loading user posts:', error);
         postsContainer.innerHTML = `<p>Error loading posts: ${error.message}</p>`;
     }
 }
 
-// Update profile
 async function updateProfile(e) {
     e.preventDefault();
     
@@ -218,13 +262,12 @@ async function updateProfile(e) {
         avatar
     };
     
-    // Only include password if it was provided
     if (password) {
         updateData.password = password;
     }
     
     try {
-        const response = await fetch(`${API_URL}/users/profile`, {
+        const response = await fetch(`/api/users/profile`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -233,42 +276,41 @@ async function updateProfile(e) {
             body: JSON.stringify(updateData)
         });
         
-        const data = await response.json();
-        
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to update profile');
+            throw new Error('Failed to update profile');
         }
         
         alert('Profile updated successfully!');
         
-        // Update local storage user data
-        const updatedUser = {
-            ...user,
-            first_name: firstName,
-            last_name: lastName,
-            bio,
-            avatar
-        };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        if (currentUser) {
+            const updatedUser = {
+                ...currentUser,
+                first_name: firstName,
+                last_name: lastName,
+                bio,
+                avatar
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
         
-        // Reload profile
         await loadProfile();
         
-        // Switch back to posts tab
-        document.querySelector('[data-tab="posts"]').click();
+        const postsTabBtn = document.querySelector('[data-tab="posts"]');
+        if (postsTabBtn) {
+            postsTabBtn.click();
+        }
+        
     } catch (error) {
-        console.error('Error updating profile:', error);
         alert(`Error updating profile: ${error.message}`);
     }
 }
 
-// Edit a post
 async function editPost(postId) {
     const newContent = prompt('Edit your post:');
-    if (newContent === null) return; // User cancelled
+    if (newContent === null) return;
     
     try {
-        const response = await fetch(`${API_URL}/posts/${postId}`, {
+        const response = await fetch(`/api/posts/${postId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -280,26 +322,23 @@ async function editPost(postId) {
         });
         
         if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to update post');
+            throw new Error('Failed to update post');
         }
         
-        // Reload user posts
         await loadUserPosts();
+        
     } catch (error) {
-        console.error('Error updating post:', error);
         alert(error.message);
     }
 }
 
-// Delete a post
 async function deletePost(postId) {
     if (!confirm('Are you sure you want to delete this post?')) {
         return;
     }
     
     try {
-        const response = await fetch(`${API_URL}/posts/${postId}`, {
+        const response = await fetch(`/api/posts/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -307,17 +346,18 @@ async function deletePost(postId) {
         });
         
         if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to delete post');
+            throw new Error('Failed to delete post');
         }
         
-        // Reload user posts
         await loadUserPosts();
+        
     } catch (error) {
-        console.error('Error deleting post:', error);
         alert(error.message);
     }
 }
 
-// Initialize on page load
-initProfilePage();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initProfilePage);
+} else {
+    initProfilePage();
+}
