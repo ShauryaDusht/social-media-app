@@ -57,7 +57,7 @@ func main() {
 	cacheRepo := repository.NewCacheRepository(cfg)
 
 	// Initialize services
-	postService := services.NewPostService(postRepo, likeRepo, cacheRepo)
+	postService := services.NewPostService(postRepo, likeRepo, cacheRepo, userRepo)
 	likeService := services.NewLikeService(likeRepo, postRepo)
 	followService := services.NewFollowService(followRepo, userRepo, cacheRepo)
 	userService := services.NewUserService(userRepo)

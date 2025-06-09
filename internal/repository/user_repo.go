@@ -82,3 +82,13 @@ func (r *userRepository) SearchUsers(query string, limit, offset int) ([]models.
 		Limit(limit).Offset(offset).Find(&users).Error
 	return users, err
 }
+
+// GetFollowers gets all users who follow the specified user
+func (r *userRepository) GetFollowers(userID uint) ([]models.User, error) {
+	var users []models.User
+	err := r.db.Table("users").
+		Joins("JOIN follows ON users.id = follows.follower_id").
+		Where("follows.following_id = ?", userID).
+		Find(&users).Error
+	return users, err
+}

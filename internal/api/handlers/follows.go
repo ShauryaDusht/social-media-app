@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"social-media-app/internal/models"
 	"social-media-app/internal/services"
 	"social-media-app/internal/utils"
 
@@ -15,6 +16,7 @@ var followService *services.FollowService
 func InitFollowHandler(s *services.FollowService) {
 	followService = s
 }
+
 func FollowUser(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -22,14 +24,13 @@ func FollowUser(c *gin.Context) {
 		return
 	}
 
-	targetIDParam := c.Param("id")
-	targetID, err := strconv.ParseUint(targetIDParam, 10, 32)
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid target user ID")
+	var followRequest models.FollowRequest
+	if err := c.ShouldBindJSON(&followRequest); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
-	err = followService.FollowUser(userID.(uint), uint(targetID))
+	err := followService.FollowUser(userID.(uint), followRequest.UserID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -45,7 +46,7 @@ func UnfollowUser(c *gin.Context) {
 		return
 	}
 
-	targetIDParam := c.Param("id")
+	targetIDParam := c.Param("user_id")
 	targetID, err := strconv.ParseUint(targetIDParam, 10, 32)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid target user ID")
@@ -62,13 +63,14 @@ func UnfollowUser(c *gin.Context) {
 }
 
 func GetFollowers(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+	userIDParam := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 
-	followers, err := followService.GetFollowers(userID.(uint))
+	followers, err := followService.GetFollowers(uint(userID))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -78,13 +80,14 @@ func GetFollowers(c *gin.Context) {
 }
 
 func GetFollowing(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+	userIDParam := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDParam, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 
-	following, err := followService.GetFollowing(userID.(uint))
+	following, err := followService.GetFollowing(uint(userID))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

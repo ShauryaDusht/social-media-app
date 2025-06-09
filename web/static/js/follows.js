@@ -68,14 +68,18 @@ async function toggleFollow() {
         const followBtn = document.getElementById('follow-btn');
         const isFollowing = followBtn.classList.contains('following');
         
-        let url, method;
+        let url, method, body;
         
         if (isFollowing) {
+            // Unfollow request
             url = `/api/follows/${targetUserId}`;
             method = 'DELETE';
+            body = null;
         } else {
+            // Follow request
             url = `/api/follows`;
             method = 'POST';
+            body = JSON.stringify({ user_id: targetUserId });
         }
         
         const response = await fetch(url, {
@@ -84,7 +88,7 @@ async function toggleFollow() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: isFollowing ? null : JSON.stringify({ user_id: targetUserId })
+            body
         });
         
         if (!response.ok) {

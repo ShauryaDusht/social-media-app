@@ -13,6 +13,7 @@ type UserRepository interface {
 	EmailExists(email string) (bool, error)
 	UsernameExists(username string) (bool, error)
 	SearchUsers(query string, limit, offset int) ([]models.User, error)
+	GetFollowers(userID uint) ([]models.User, error)
 }
 
 // PostRepository defines post database operations
