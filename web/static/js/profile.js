@@ -211,6 +211,7 @@ async function loadUserPosts() {
             postElement.className = 'post-card';
             
             const isOwnPost = currentUserId && post.user && post.user.id === currentUserId;
+            const isLiked = post.is_liked || false;
             
             let dateString = 'Unknown date';
             try {
@@ -228,7 +229,7 @@ async function loadUserPosts() {
                 <div class="post-content">${post.content || 'No content'}</div>
                 ${post.image_url ? `<img src="${post.image_url}" alt="Post image" class="post-image">` : ''}
                 <div class="post-actions">
-                    <div class="post-action">
+                    <div class="post-action ${isLiked ? 'liked' : ''}" onclick="toggleLike(${post.id}, ${isLiked})">
                         ❤ ${post.like_count || 0} Likes
                     </div>
                     ${isOwnPost ? `
@@ -352,6 +353,57 @@ async function deletePost(postId) {
         await loadUserPosts();
         
     } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function toggleLike(postId, isLiked) {
+    if (!token) {
+        alert('Please login to like posts');
+        return;
+    }
+    
+    try {
+        const method = isLiked ? 'DELETE' : 'POST';
+        const url = isLiked ? `${API_URL}/likes/${postId}` : `${API_URL}/likes`;
+        
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: isLiked ? null : JSON.stringify({ post_id: postId })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to toggle like');
+        }
+        
+        // Update UI without reloading all posts
+        const postElement = document.querySelector(`.post-card:has([onclick="toggleLike(${postId}, ${isLiked})"])`);
+        if (postElement) {
+            const likeAction = postElement.querySelector('.post-action');
+            
+            if (likeAction) {
+                if (isLiked) {
+                    likeAction.classList.remove('liked');
+                    const likeText = likeAction.textContent.trim();
+                    const likeCount = parseInt(likeText.match(/\d+/)[0]) || 0;
+                    likeAction.textContent = `❤ ${Math.max(0, likeCount - 1)} Likes`;
+                    likeAction.setAttribute('onclick', `toggleLike(${postId}, false)`);
+                } else {
+                    likeAction.classList.add('liked');
+                    const likeText = likeAction.textContent.trim();
+                    const likeCount = parseInt(likeText.match(/\d+/)[0]) || 0;
+                    likeAction.textContent = `❤ ${likeCount + 1} Likes`;
+                    likeAction.setAttribute('onclick', `toggleLike(${postId}, true)`);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
         alert(error.message);
     }
 }

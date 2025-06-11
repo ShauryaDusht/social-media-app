@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"social-media-app/internal/models"
 	"social-media-app/internal/services"
 	"social-media-app/internal/utils"
 
@@ -16,10 +17,9 @@ func InitLikeHandler(s *services.LikeService) {
 	like_service = s
 }
 func LikePost(c *gin.Context) {
-	postIDParam := c.Param("id")
-	postID, err := strconv.ParseUint(postIDParam, 10, 32)
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid post ID")
+	var likeRequest models.LikeRequest
+	if err := c.ShouldBindJSON(&likeRequest); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -29,7 +29,7 @@ func LikePost(c *gin.Context) {
 		return
 	}
 
-	if err := like_service.LikePost(userID.(uint), uint(postID)); err != nil {
+	if err := like_service.LikePost(userID.(uint), likeRequest.PostID); err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -38,7 +38,7 @@ func LikePost(c *gin.Context) {
 }
 
 func UnlikePost(c *gin.Context) {
-	postIDParam := c.Param("id")
+	postIDParam := c.Param("post_id")
 	postID, err := strconv.ParseUint(postIDParam, 10, 32)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid post ID")

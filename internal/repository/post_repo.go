@@ -46,7 +46,12 @@ func (r *postRepository) GetAll(limit, offset int) ([]models.Post, error) {
 }
 
 func (r *postRepository) Update(post *models.Post) error {
-	return r.db.Save(post).Error
+	// Use Updates instead of Save to only update specific fields
+	// This prevents updating timestamps automatically
+	return r.db.Model(post).Updates(map[string]interface{}{
+		"content":   post.Content,
+		"image_url": post.ImageURL,
+	}).Error
 }
 
 func (r *postRepository) Delete(id uint) error {

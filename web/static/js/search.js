@@ -45,7 +45,7 @@ async function performSearch() {
 
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/users/search?query=${encodeURIComponent(query)}&limit=10&offset=0`, {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&limit=10&offset=0`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -56,7 +56,7 @@ async function performSearch() {
         }
 
         const data = await response.json();
-        displaySearchResults(data);
+        displaySearchResults(data.data || []);
     } catch (error) {
         console.error('Error searching users:', error);
     }

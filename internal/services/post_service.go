@@ -88,6 +88,15 @@ func (s *PostService) GetByUserID(userID uint, limit, offset int) ([]models.Post
 }
 
 func (s *PostService) Update(post *models.Post) error {
+	// Get the original post to get the user ID
+	originalPost, err := s.postRepo.GetByID(post.ID)
+	if err != nil {
+		return err
+	}
+
+	// Preserve the user ID from the original post
+	post.UserID = originalPost.UserID
+
 	// Invalidate post cache
 	s.cacheRepo.DeletePostCache(post.ID)
 

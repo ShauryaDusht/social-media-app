@@ -157,11 +157,28 @@ async function toggleLike(postId, isLiked) {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to toggle like');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to toggle like');
         }
         
-        await loadTimelinePosts();
+        // Update UI without reloading all posts
+        const postElement = document.querySelector(`.post-card[data-id="${postId}"]`);
+        if (postElement) {
+            const likeAction = postElement.querySelector('.post-action');
+            const likeCount = postElement.querySelector('.like-count');
+            
+            if (likeAction && likeCount) {
+                if (isLiked) {
+                    likeAction.classList.remove('liked');
+                    likeCount.textContent = Math.max(0, parseInt(likeCount.textContent) - 1);
+                } else {
+                    likeAction.classList.add('liked');
+                    likeCount.textContent = parseInt(likeCount.textContent) + 1;
+                }
+            }
+        }
     } catch (error) {
+        console.error('Error toggling like:', error);
         alert(error.message);
     }
 }

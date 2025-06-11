@@ -36,7 +36,8 @@ func (s *FollowService) FollowUser(followerID, followingID uint) error {
 		return err
 	}
 	if exists {
-		return errors.New("already following this user")
+		// If already following, just return success instead of error
+		return nil
 	}
 
 	follow := &models.Follow{
@@ -63,7 +64,8 @@ func (s *FollowService) UnfollowUser(followerID, followingID uint) error {
 		return err
 	}
 	if !exists {
-		return errors.New("not following this user")
+		// If not following, just return success instead of error
+		return nil
 	}
 
 	err = s.followRepo.Delete(followerID, followingID)
