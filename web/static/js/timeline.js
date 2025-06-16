@@ -38,6 +38,22 @@ async function loadTimelinePosts() {
         return;
     }
     
+    // Check if we have cached timeline data and it's not expired
+    const cachedTimeline = getTimelineFromCache();
+    if (cachedTimeline) {
+        // Display cached timeline
+        displayPosts(cachedTimeline, postsContainer);
+        
+        // If cache is older than 2 minutes, refresh in background
+        const cacheTime = localStorage.getItem('timeline_cache_time');
+        const cacheAge = Date.now() - parseInt(cacheTime || 0);
+        if (cacheAge > 2 * 60 * 1000) { // 2 minutes in milliseconds
+            refreshTimelineInBackground();
+        }
+        return;
+    }
+    
+    // No cache or expired cache, show loading and fetch from server
     postsContainer.innerHTML = '<div class="loading">Loading your timeline...</div>';
     
     try {
@@ -63,23 +79,10 @@ async function loadTimelinePosts() {
         const data = await response.json();
         const posts = data.data || data || [];
         
-        if (posts.length === 0) {
-            postsContainer.innerHTML = `
-                <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
-                    <h3>Your Timeline is Empty</h3>
-                    <p>Follow some users or create your first post to see content here.</p>
-                    <a href="/posts" style="display: inline-block; background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">Create Post</a>
-                    <a href="/users" style="display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">Find Users</a>
-                </div>
-            `;
-            return;
-        }
+        // Cache the timeline data
+        saveTimelineToCache(posts);
         
-        postsContainer.innerHTML = '';
-        posts.forEach(post => {
-            const postElement = createTimelinePostElement(post);
-            postsContainer.appendChild(postElement);
-        });
+        displayPosts(posts, postsContainer);
         
     } catch (error) {
         postsContainer.innerHTML = `
@@ -90,6 +93,89 @@ async function loadTimelinePosts() {
             </div>
         `;
     }
+}
+
+// Save timeline data to localStorage cache
+function saveTimelineToCache(posts) {
+    try {
+        localStorage.setItem('timeline_cache', JSON.stringify(posts));
+        localStorage.setItem('timeline_cache_time', Date.now().toString());
+    } catch (error) {
+        console.error('Error saving timeline to cache:', error);
+        // If localStorage is full, clear it and try again
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+            localStorage.clear();
+            try {
+                localStorage.setItem('timeline_cache', JSON.stringify(posts));
+                localStorage.setItem('timeline_cache_time', Date.now().toString());
+            } catch (e) {
+                console.error('Still unable to cache timeline after clearing localStorage:', e);
+            }
+        }
+    }
+}
+
+// Get timeline data from localStorage cache
+function getTimelineFromCache() {
+    const cachedData = localStorage.getItem('timeline_cache');
+    if (!cachedData) return null;
+    
+    try {
+        return JSON.parse(cachedData);
+    } catch (error) {
+        console.error('Error parsing cached timeline:', error);
+        return null;
+    }
+}
+
+// Refresh timeline in background without showing loading indicator
+async function refreshTimelineInBackground() {
+    try {
+        const response = await fetch(`${API_URL}/posts`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const posts = data.data || data || [];
+        
+        // Update cache
+        saveTimelineToCache(posts);
+        
+        // Update UI if user is still on the page
+        const postsContainer = document.getElementById('timeline-posts');
+        if (postsContainer) {
+            displayPosts(posts, postsContainer);
+        }
+    } catch (error) {
+        console.error('Background refresh error:', error);
+    }
+}
+
+// Display posts in the container
+function displayPosts(posts, container) {
+    if (posts.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
+                <h3>Your Timeline is Empty</h3>
+                <p>Follow some users or create your first post to see content here.</p>
+                <a href="/posts" style="display: inline-block; background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">Create Post</a>
+                <a href="/users" style="display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">Find Users</a>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    posts.forEach(post => {
+        const postElement = createTimelinePostElement(post);
+        container.appendChild(postElement);
+    });
 }
 
 function createTimelinePostElement(post) {
@@ -177,10 +263,36 @@ async function toggleLike(postId, isLiked) {
                 }
             }
         }
+        
+        // Update the cached timeline
+        updateCachedPost(postId, isLiked);
     } catch (error) {
         console.error('Error toggling like:', error);
         alert(error.message);
     }
+}
+
+// Update a single post in the cached timeline
+function updateCachedPost(postId, wasLiked) {
+    const cachedTimeline = getTimelineFromCache();
+    if (!cachedTimeline) return;
+    
+    const updatedTimeline = cachedTimeline.map(post => {
+        if (post.id === postId) {
+            // Toggle the is_liked status
+            post.is_liked = !wasLiked;
+            
+            // Update the like count
+            if (wasLiked) {
+                post.like_count = Math.max(0, (post.like_count || 0) - 1);
+            } else {
+                post.like_count = (post.like_count || 0) + 1;
+            }
+        }
+        return post;
+    });
+    
+    saveTimelineToCache(updatedTimeline);
 }
 
 async function deletePost(postId) {
@@ -200,14 +312,34 @@ async function deletePost(postId) {
             throw new Error('Failed to delete post');
         }
         
-        await loadTimelinePosts();
+        // Remove from cache
+        removePostFromCache(postId);
+        
+        // Remove from UI
+        const postElement = document.querySelector(`.post-card[data-id="${postId}"]`);
+        if (postElement) {
+            postElement.remove();
+        }
     } catch (error) {
         alert(error.message);
     }
 }
 
+// Remove a post from the cached timeline
+function removePostFromCache(postId) {
+    const cachedTimeline = getTimelineFromCache();
+    if (!cachedTimeline) return;
+    
+    const updatedTimeline = cachedTimeline.filter(post => post.id !== postId);
+    saveTimelineToCache(updatedTimeline);
+}
+
 async function editPost(postId) {
-    const newContent = prompt('Edit your post:');
+    const cachedTimeline = getTimelineFromCache();
+    const post = cachedTimeline?.find(p => p.id === postId);
+    const currentContent = post?.content || '';
+    
+    const newContent = prompt('Edit your post:', currentContent);
     if (newContent === null) {
         return;
     }
@@ -228,10 +360,35 @@ async function editPost(postId) {
             throw new Error('Failed to update post');
         }
         
-        await loadTimelinePosts();
+        // Update in cache
+        updatePostContentInCache(postId, newContent);
+        
+        // Update in UI
+        const postElement = document.querySelector(`.post-card[data-id="${postId}"]`);
+        if (postElement) {
+            const contentElement = postElement.querySelector('.post-content');
+            if (contentElement) {
+                contentElement.textContent = newContent;
+            }
+        }
     } catch (error) {
         alert(error.message);
     }
+}
+
+// Update post content in the cached timeline
+function updatePostContentInCache(postId, newContent) {
+    const cachedTimeline = getTimelineFromCache();
+    if (!cachedTimeline) return;
+    
+    const updatedTimeline = cachedTimeline.map(post => {
+        if (post.id === postId) {
+            post.content = newContent;
+        }
+        return post;
+    });
+    
+    saveTimelineToCache(updatedTimeline);
 }
 
 function viewProfile(userId) {
@@ -239,6 +396,12 @@ function viewProfile(userId) {
         window.location.href = `/profile?id=${userId}`;
     }
 }
+
+// Clear timeline cache when user logs out
+document.addEventListener('logout', function() {
+    localStorage.removeItem('timeline_cache');
+    localStorage.removeItem('timeline_cache_time');
+});
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTimelinePage);

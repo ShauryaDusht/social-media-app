@@ -19,7 +19,8 @@ func (r *followRepository) Create(follow *models.Follow) error {
 }
 
 func (r *followRepository) Delete(followerID, followingID uint) error {
-	return r.db.Where("follower_id = ? AND following_id = ?", followerID, followingID).Delete(&models.Follow{}).Error
+	// Use Unscoped to permanently delete the record instead of soft delete
+	return r.db.Unscoped().Where("follower_id = ? AND following_id = ?", followerID, followingID).Delete(&models.Follow{}).Error
 }
 
 func (r *followRepository) Exists(followerID, followingID uint) (bool, error) {
