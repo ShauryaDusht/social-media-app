@@ -96,11 +96,9 @@ This section outlines the progress and current status of the Micro-Blogging Webs
 ```
 social-media-app/
 ├── deployments/
-│   ├── docker/
-│   │   └── Dockerfile
-│   └── nginx/
+│   └── docker/
+│       └── Dockerfile
 ├── docker-compose.yml
-├── docs/
 ├── go.mod
 ├── go.sum
 ├── internal/
@@ -149,15 +147,12 @@ social-media-app/
 │       └── response.go
 ├── LICENSE
 ├── main.go
-├── phases/
-│   └── progress.md
 ├── README.md
 ├── scripts/
 │   ├── init.sql
 │   ├── migrate.bat
 │   ├── test_auth.bat
 │   └── test_auth_with_token.bat
-├── tests/
 ├── tree.py
 └── web/
     ├── index.html
@@ -171,8 +166,8 @@ social-media-app/
         ├── img/
         │   └── default-avatar.png
         └── js/
-            ├── auth-check.js
             ├── auth.js
+            ├── config.js
             ├── follows.js
             ├── index.js
             ├── posts.js

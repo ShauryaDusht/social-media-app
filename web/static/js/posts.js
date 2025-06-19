@@ -20,6 +20,10 @@ async function initPostsPage() {
     console.log('🔧 DEBUG: Initializing posts page');
     
     // Check if user is logged in
+    if (!CONFIG.checkAuth()) return;
+
+    const token = CONFIG.getToken();
+    const user = CONFIG.getUser();
     if (!token) {
         console.log('🔧 DEBUG: No token found, redirecting to login');
         alert('Please login to create posts');

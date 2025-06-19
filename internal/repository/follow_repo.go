@@ -15,12 +15,23 @@ func NewFollowRepository(db *gorm.DB) FollowRepository {
 }
 
 func (r *followRepository) Create(follow *models.Follow) error {
-	return r.db.Create(follow).Error
+	// Use a transaction to ensure atomicity
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		return tx.Create(follow).Error
+	})
 }
 
 func (r *followRepository) Delete(followerID, followingID uint) error {
-	// Use Unscoped to permanently delete the record instead of soft delete
-	return r.db.Unscoped().Where("follower_id = ? AND following_id = ?", followerID, followingID).Delete(&models.Follow{}).Error
+	// Use transaction for consistency
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Use Unscoped to permanently delete the record instead of soft delete
+		result := tx.Unscoped().Where("follower_id = ? AND following_id = ?", followerID, followingID).Delete(&models.Follow{})
+		if result.Error != nil {
+			return result.Error
+		}
+		// Even if no rows were affected, don't return an error (idempotent operation)
+		return nil
+	})
 }
 
 func (r *followRepository) Exists(followerID, followingID uint) (bool, error) {

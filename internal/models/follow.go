@@ -8,8 +8,8 @@ import (
 
 type Follow struct {
 	ID          uint           `json:"id" gorm:"primaryKey"`
-	FollowerID  uint           `json:"follower_id" gorm:"not null;index"`  // User who follows
-	FollowingID uint           `json:"following_id" gorm:"not null;index"` // User being followed
+	FollowerID  uint           `json:"follower_id" gorm:"not null;index;uniqueIndex:unique_follower_following"`  // User who follows
+	FollowingID uint           `json:"following_id" gorm:"not null;index;uniqueIndex:unique_follower_following"` // User being followed
 	CreatedAt   time.Time      `json:"created_at"`
 	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
 
@@ -18,7 +18,7 @@ type Follow struct {
 	Following User `json:"following" gorm:"foreignKey:FollowingID"`
 }
 
-// Ensure unique constraint on follower_id and following_id combination
+// TableName specifies the table name
 func (Follow) TableName() string {
 	return "follows"
 }
