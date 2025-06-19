@@ -33,6 +33,8 @@ type LikeRepository interface {
 	Delete(userID, postID uint) error
 	Exists(userID, postID uint) (bool, error)
 	GetByPostID(postID uint) ([]models.Like, error)
+	GetLikeCount(postID uint) (int64, error)
+	GetLikedUserIDs(postID uint) ([]uint, error)
 }
 
 // FollowRepository defines follow database operations

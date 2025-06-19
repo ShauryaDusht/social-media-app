@@ -60,12 +60,13 @@ This section outlines the progress and current status of the Micro-Blogging Webs
 
 ## Phase 4: Post APIs - [IN PROGRESS]
 - CRUD APIs for posts - [DONE]
-- Like/unlike posts - [BUG] : likes not registering
-- User timeline logic - [DONE]
+- Like/unlike posts - [BUG] : re-liking a post gives error
+- User timeline logic - [UPDATE] : has to be updated according to the user's following list (currently it is showing all posts of all users)
 
-## Phase 5: Follow System and Caching - [TODO]
-- Follow System - [BUG] : refollow not working
+## Phase 5: Follow System and Caching - [IN PROGRESS]
+- Follow System - [DONE]
 - Caching Timeline - [TODO]
+- User profile search functionality - [DONE]
 
 ## Phase 6: Rate Limiting - [TODO]
 - Rate limiting for APIs
@@ -75,7 +76,7 @@ This section outlines the progress and current status of the Micro-Blogging Webs
 ## Phase 7: Deployment and CI/CD - [TODO]
 - Docker
 - Nginx
-- CI/CD
+- Make a Load Balancer (run on multiple instances)
 
 ## Phase 8: Monitoring - [TODO]
 - Prometheus metrics
@@ -85,13 +86,13 @@ This section outlines the progress and current status of the Micro-Blogging Webs
 - Testing using python/go scripts
 
 ## Additional Features - [TODO]
-- Real-time notifications via WebSockets for likes and follows
-- Search functionality for users, posts, and hashtags
+- Add authentication using OAuth (GitHub, Google, etc)
+- Improve search functionality by adding some fuzzyness
+
 
 ---
 
 # Directory Structure
-
 
 ```
 social-media-app/
@@ -153,7 +154,6 @@ social-media-app/
 │   ├── migrate.bat
 │   ├── test_auth.bat
 │   └── test_auth_with_token.bat
-├── tree.py
 └── web/
     ├── index.html
     ├── login.html
@@ -166,6 +166,7 @@ social-media-app/
         ├── img/
         │   └── default-avatar.png
         └── js/
+            ├── auth-check.js
             ├── auth.js
             ├── config.js
             ├── follows.js

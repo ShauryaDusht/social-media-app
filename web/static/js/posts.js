@@ -1,85 +1,84 @@
-// Check if API_URL is already defined to avoid redeclaration errors
-if (typeof API_URL === 'undefined') {
-    var API_URL = '/api';
+// Helper functions for authentication
+function getToken() {
+    return localStorage.getItem('token');
 }
 
-// Check if these variables are already defined
-if (typeof token === 'undefined') {
-    var token = localStorage.getItem('token');
-}
-if (typeof user === 'undefined') {
-    var user = JSON.parse(localStorage.getItem('user'));
+function getUser() {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
 }
 
-console.log('🔧 DEBUG: Posts.js loaded');
-console.log('Token exists:', !!token);
-console.log('User data:', user);
+function checkAuth() {
+    const token = getToken();
+    const user = getUser();
+    
+    if (!token || !user) {
+        alert('Please login to access this page');
+        window.location.href = '/login';
+        return false;
+    }
+    return true;
+}
 
 // Initialize posts page
 async function initPostsPage() {
-    console.log('🔧 DEBUG: Initializing posts page');
-    
-    // Check if user is logged in
-    if (!CONFIG.checkAuth()) return;
-
-    const token = CONFIG.getToken();
-    const user = CONFIG.getUser();
-    if (!token) {
-        console.log('🔧 DEBUG: No token found, redirecting to login');
-        alert('Please login to create posts');
-        window.location.href = '/login';
+    // Check authentication
+    if (!checkAuth()) {
         return;
     }
+
+    const token = getToken();
+    const user = getUser();
     
     // Set up post form submission
     const postForm = document.getElementById('post-form');
     if (!postForm) {
-        console.log('🔧 DEBUG: post-form element not found');
         return;
     }
     
-    console.log('🔧 DEBUG: Setting up post form event listener');
     postForm.addEventListener('submit', createPost);
 }
 
 // Create a new post
 async function createPost(e) {
-    console.log('🔧 DEBUG: Creating new post');
     e.preventDefault();
+    
+    const token = getToken();
+    if (!token) {
+        alert('Please login to create posts');
+        window.location.href = '/login';
+        return;
+    }
     
     const contentElement = document.getElementById('post-content');
     const imageUrlElement = document.getElementById('image-url');
     
     if (!contentElement) {
-        console.log('🔧 DEBUG: post-content element not found');
         return;
     }
     
     const content = contentElement.value;
     const imageUrl = imageUrlElement ? imageUrlElement.value : '';
     
-    console.log('🔧 DEBUG: Post data:');
-    console.log('- Content:', content);
-    console.log('- Image URL:', imageUrl);
-    
     if (!content.trim()) {
-        console.log('🔧 DEBUG: Content is empty');
         alert('Please enter some content for your post');
         return;
     }
     
+    // Disable form to prevent double submission
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating...';
+    }
+    
     try {
-        console.log('🔧 DEBUG: Making API request to create post');
-        console.log('API URL:', `${API_URL}/posts`);
-        
         const requestBody = {
             content: content.trim(),
-            image_url: imageUrl.trim() || null
+            image_url: imageUrl.trim() || ''
         };
         
-        console.log('🔧 DEBUG: Request body:', requestBody);
-        
-        const response = await fetch(`${API_URL}/posts`, {
+        const response = await fetch('/api/posts', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -88,45 +87,61 @@ async function createPost(e) {
             body: JSON.stringify(requestBody)
         });
         
-        console.log('🔧 DEBUG: Create post response:');
-        console.log('- Status:', response.status);
-        console.log('- OK:', response.ok);
-        
         const data = await response.json();
-        console.log('🔧 DEBUG: Response data:', data);
         
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to create post');
+            throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
         }
         
         // Clear form
-        console.log('🔧 DEBUG: Clearing form');
         contentElement.value = '';
         if (imageUrlElement) {
             imageUrlElement.value = '';
         }
         
+        // Clear timeline cache so the new post appears for all users
+        clearTimelineCache();
+        
         // Show success message
-        console.log('🔧 DEBUG: Post created successfully');
         alert('Post created successfully!');
         
-        // Optionally redirect to home page to see the post
+        // Optionally redirect to home page
         if (confirm('Post created! Do you want to go to the home page to see it?')) {
-            console.log('🔧 DEBUG: Redirecting to home page');
             window.location.href = '/';
         }
+        
     } catch (error) {
-        console.error('🔧 DEBUG: Error creating post:', error);
-        console.error('🔧 DEBUG: Error stack:', error.stack);
-        alert(error.message);
+        console.error('Error creating post:', error);
+        alert(`Error creating post: ${error.message}`);
+    } finally {
+        // Re-enable form
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Create Post';
+        }
     }
 }
 
-// Initialize on page load
-console.log('🔧 DEBUG: Setting up posts page initialization');
-// Wait for DOM to be ready before initializing
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPostsPage);
-} else {
-    initPostsPage();
+// Function to clear timeline cache
+function clearTimelineCache() {
+    try {
+        localStorage.removeItem('timeline_cache');
+        localStorage.removeItem('timeline_cache_time');
+        console.log('Timeline cache cleared after creating post');
+    } catch (error) {
+        console.error('Error clearing timeline cache:', error);
+    }
 }
+
+// Wait for DOM and try to initialize
+function tryInit() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPostsPage);
+    } else {
+        // DOM is already ready, initialize immediately
+        initPostsPage();
+    }
+}
+
+// Call initialization
+tryInit();

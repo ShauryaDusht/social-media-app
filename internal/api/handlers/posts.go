@@ -58,7 +58,7 @@ func CreatePost(c *gin.Context) {
 
 	var post models.CreatePostRequest
 	if err := c.BindJSON(&post); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
 		return
 	}
 

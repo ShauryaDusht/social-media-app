@@ -183,7 +183,8 @@ function createTimelinePostElement(post) {
     postElement.className = 'post-card';
     postElement.dataset.id = post.id;
     
-    const isLiked = post.is_liked;
+    // Check if current user liked this post
+    const isLiked = post.liked_by && post.liked_by.includes(user.id);
     const isOwnPost = user && post.user && post.user.id === user.id;
     
     let dateString = 'Unknown date';
@@ -247,47 +248,51 @@ async function toggleLike(postId, isLiked) {
             throw new Error(errorData.error || 'Failed to toggle like');
         }
         
-        // Update UI without reloading all posts
+        const responseData = await response.json();
+        const data = responseData.data || responseData;
+        
+        // Update UI immediately with server response
         const postElement = document.querySelector(`.post-card[data-id="${postId}"]`);
         if (postElement) {
             const likeAction = postElement.querySelector('.post-action');
             const likeCount = postElement.querySelector('.like-count');
             
             if (likeAction && likeCount) {
-                if (isLiked) {
-                    likeAction.classList.remove('liked');
-                    likeCount.textContent = Math.max(0, parseInt(likeCount.textContent) - 1);
-                } else {
+                if (data.is_liked) {
                     likeAction.classList.add('liked');
-                    likeCount.textContent = parseInt(likeCount.textContent) + 1;
+                    likeAction.setAttribute('onclick', `toggleLike(${postId}, true)`);
+                } else {
+                    likeAction.classList.remove('liked');
+                    likeAction.setAttribute('onclick', `toggleLike(${postId}, false)`);
                 }
+                likeCount.textContent = data.like_count || 0;
             }
         }
         
-        // Update the cached timeline
-        updateCachedPost(postId, isLiked);
+        // Update the cached timeline with server response
+        updateCachedPostFromServer(postId, data);
+        
+        // Force refresh timeline in background to ensure consistency
+        setTimeout(() => {
+            refreshTimelineInBackground();
+        }, 500);
+        
     } catch (error) {
         console.error('Error toggling like:', error);
         alert(error.message);
     }
 }
 
-// Update a single post in the cached timeline
-function updateCachedPost(postId, wasLiked) {
+// Update a single post in the cached timeline with server data
+function updateCachedPostFromServer(postId, serverData) {
     const cachedTimeline = getTimelineFromCache();
     if (!cachedTimeline) return;
     
     const updatedTimeline = cachedTimeline.map(post => {
         if (post.id === postId) {
-            // Toggle the is_liked status
-            post.is_liked = !wasLiked;
-            
-            // Update the like count
-            if (wasLiked) {
-                post.like_count = Math.max(0, (post.like_count || 0) - 1);
-            } else {
-                post.like_count = (post.like_count || 0) + 1;
-            }
+            post.like_count = serverData.like_count || 0;
+            post.liked_by = serverData.liked_by || [];
+            post.is_liked = serverData.is_liked || false;
         }
         return post;
     });
@@ -320,6 +325,12 @@ async function deletePost(postId) {
         if (postElement) {
             postElement.remove();
         }
+        
+        // Refresh timeline to ensure consistency
+        setTimeout(() => {
+            refreshTimelineInBackground();
+        }, 500);
+        
     } catch (error) {
         alert(error.message);
     }
@@ -371,6 +382,12 @@ async function editPost(postId) {
                 contentElement.textContent = newContent;
             }
         }
+        
+        // Refresh timeline to ensure consistency
+        setTimeout(() => {
+            refreshTimelineInBackground();
+        }, 500);
+        
     } catch (error) {
         alert(error.message);
     }
@@ -402,6 +419,13 @@ document.addEventListener('logout', function() {
     localStorage.removeItem('timeline_cache');
     localStorage.removeItem('timeline_cache_time');
 });
+
+// Force refresh timeline every 2 minutes to ensure consistency
+setInterval(() => {
+    if (token && document.getElementById('timeline-posts')) {
+        refreshTimelineInBackground();
+    }
+}, 2 * 60 * 1000);  // 2 minutes in milliseconds
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTimelinePage);
