@@ -1,34 +1,62 @@
-# Social Media App
+# Postly
 
-A modern social media platform built with Go, PostgreSQL, and Redis.
+A Twitter like Micro-Blogging website built with Go, PostgreSQL, and Redis.
 
 ## Quick Start
 
 ### Prerequisites
 - Go 1.21+
-- Docker Desktop
-- Git
+- Docker
+- PostgreSQL
+- Redis
 
 ### Setup
-1. Clone the repository
-2. Run setup script: `setup.bat`
-3. Update `.env` file with your configuration
-4. Start the application: `start.bat`
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ShauryaDusht/go-social-media-app
+   ```
 
-### Development
-- API will be available at: `http://localhost:8080`
-- PostgreSQL: `localhost:5432`
-- Redis: `localhost:6379`
+2. Navigate to the project directory:
+   ```bash
+   cd go-social-media-app
+   ```
+3. Set up environment variables:
+   Create a `.env` file in the root directory with the following content:
+   ```env
+    DB_HOST=localhost
+    DB_PORT=xxxx
+    DB_USER=admin
+    DB_PASSWORD=your_db_password
+    DB_NAME=social_media
+    DB_SSL_MODE=disable
 
-### API Endpoints
-- `GET /health` - Health check
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/posts` - Get posts
-- `POST /api/posts` - Create post
+    REDIS_HOST=localhost
+    REDIS_PORT=6379
+    REDIS_PASSWORD=your_redis_password
+    REDIS_DB=0
 
-### Testing
-Run tests: `go test ./...`
+    JWT_SECRET=your_jwt_secret
+    JWT_EXPIRATION=24h
+
+    SERVER_PORT=8081
+    SERVER_HOST=0.0.0.0
+    ENVIRONMENT=development
+
+    RATE_LIMITING_REQUESTS=100
+    RATE_LIMITING_WINDOW=1h
+    ```
+
+4. Build the Docker image:
+   ```bash
+   docker compose up -d --build
+   ```
+5. Run the application:
+   ```bash
+   go run main.go
+    ```
+6. Access the application in your browser:
+
+   Open `http://localhost:8081` for the web interface.
 
 ### Docker Commands
 - Start services: `docker-compose up -d`
@@ -38,9 +66,9 @@ Run tests: `go test ./...`
 
 ---
 
-# Micro-Blogging Website Project Status
+# Project Status
 
-This section outlines the progress and current status of the Micro-Blogging Website Project.
+This section outlines the progress and current status of the Micro-Blogging Project.
 
 ## Phase 1: Environment Setup - [DONE]
 - Set up environment
@@ -65,7 +93,7 @@ This section outlines the progress and current status of the Micro-Blogging Webs
 
 ## Phase 5: Follow System and Caching - [IN PROGRESS]
 - Follow System - [DONE]
-- Caching Timeline - [TODO]
+- Caching Timeline - [DONE]
 - User profile search functionality - [DONE]
 
 ## Phase 6: Rate Limiting - [TODO]
