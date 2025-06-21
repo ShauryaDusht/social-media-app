@@ -96,10 +96,10 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 - Caching Timeline - [DONE]
 - User profile search functionality - [DONE]
 
-## Phase 6: Rate Limiting - [TODO]
-- Rate limiting for APIs
-- Use token bucket or fixed window (via Redis)
-- Per user or IP — apply on post creation, likes, follow, etc
+## Phase 6: Rate Limiting - [DONE]
+- Rate limiting for APIs - [DONE]
+- Use token bucket or fixed window (via Redis) - [DONE]
+- Per user or IP — apply on post creation, likes, follow, etc - [DONE]
 
 ## Phase 7: Deployment and CI/CD - [TODO]
 - Docker
@@ -130,6 +130,9 @@ social-media-app/
 ├── docker-compose.yml
 ├── go.mod
 ├── go.sum
+├── images/
+│   ├── profile.png
+│   └── timeline.png
 ├── internal/
 │   ├── api/
 │   │   ├── handlers/
@@ -140,7 +143,8 @@ social-media-app/
 │   │   │   └── users.go
 │   │   ├── middleware/
 │   │   │   ├── auth.go
-│   │   │   └── cors.go
+│   │   │   ├── cors.go
+│   │   │   └── rate_limit.go
 │   │   └── routes.go
 │   ├── config/
 │   │   └── config.go

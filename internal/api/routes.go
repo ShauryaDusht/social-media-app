@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -17,6 +18,9 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	}
 
 	router := gin.New()
+
+	// Initialize rate limiter
+	rateLimiter := middleware.NewRateLimiter(cfg)
 
 	// Global middleware
 	router.Use(gin.Logger())
@@ -34,11 +38,23 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	// API routes
 	api := router.Group("/api")
 	{
-		// Authentication routes (no auth required)
+		// Authentication routes (rate limited by IP)
 		auth := api.Group("/auth")
 		{
-			auth.POST("/register", handlers.Register)
-			auth.POST("/login", handlers.Login)
+			// More restrictive rate limiting for auth endpoints
+			authRateLimit := middleware.CustomRateLimitConfig{
+				Requests: 10, // 10 requests per hour for auth
+				Window:   time.Hour,
+			}
+
+			auth.POST("/register",
+				rateLimiter.CustomRateLimit("register", authRateLimit),
+				handlers.Register,
+			)
+			auth.POST("/login",
+				rateLimiter.CustomRateLimit("login", authRateLimit),
+				handlers.Login,
+			)
 			auth.GET("/login", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{
 					"message": "Please use POST method for login",
@@ -51,46 +67,93 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware())
 		{
-			// User routes
+			// User routes (light rate limiting)
 			users := protected.Group("/users")
 			{
 				users.GET("/profile", handlers.GetProfile)
-				users.PUT("/profile", handlers.UpdateProfile)
+				users.PUT("/profile",
+					rateLimiter.RateLimitByUser("update_profile"),
+					handlers.UpdateProfile,
+				)
 				users.GET("/:id", handlers.GetUserByID)
-				users.GET("/search", handlers.SearchUsers)
+				users.GET("/search",
+					rateLimiter.RateLimitByUser("search"),
+					handlers.SearchUsers,
+				)
 			}
 
-			// Post routes
+			// Post routes (moderate rate limiting)
 			posts := protected.Group("/posts")
 			{
 				posts.GET("/", handlers.GetPosts)
-				posts.POST("/", handlers.CreatePost)
+
+				// Stricter rate limiting for post creation
+				postCreateRateLimit := middleware.CustomRateLimitConfig{
+					Requests: 20, // 20 posts per hour
+					Window:   time.Hour,
+				}
+				posts.POST("/",
+					rateLimiter.CustomRateLimit("create_post", postCreateRateLimit),
+					handlers.CreatePost,
+				)
+
 				posts.GET("/:id", handlers.GetPostByID)
-				posts.PUT("/:id", handlers.UpdatePost)
-				posts.DELETE("/:id", handlers.DeletePost)
+				posts.PUT("/:id",
+					rateLimiter.RateLimitByUser("update_post"),
+					handlers.UpdatePost,
+				)
+				posts.DELETE("/:id",
+					rateLimiter.RateLimitByUser("delete_post"),
+					handlers.DeletePost,
+				)
 				posts.GET("/user/:user_id", handlers.GetUserPosts)
 			}
 
-			// Like routes
+			// Like routes (stricter rate limiting to prevent spam)
 			likes := protected.Group("/likes")
 			{
-				likes.POST("/", handlers.LikePost)
-				likes.DELETE("/:post_id", handlers.UnlikePost)
+				likeRateLimit := middleware.CustomRateLimitConfig{
+					Requests: 60, // 60 likes per hour
+					Window:   time.Hour,
+				}
+
+				likes.POST("/",
+					rateLimiter.CustomRateLimit("like_post", likeRateLimit),
+					handlers.LikePost,
+				)
+				likes.DELETE("/:post_id",
+					rateLimiter.CustomRateLimit("unlike_post", likeRateLimit),
+					handlers.UnlikePost,
+				)
 			}
 
-			// Follow routes
+			// Follow routes (moderate rate limiting)
 			follows := protected.Group("/follows")
 			{
-				follows.POST("/", handlers.FollowUser)
-				follows.DELETE("/:user_id", handlers.UnfollowUser)
+				followRateLimit := middleware.CustomRateLimitConfig{
+					Requests: 50, // 50 follows per hour
+					Window:   time.Hour,
+				}
+
+				follows.POST("/",
+					rateLimiter.CustomRateLimit("follow_user", followRateLimit),
+					handlers.FollowUser,
+				)
+				follows.DELETE("/:user_id",
+					rateLimiter.CustomRateLimit("unfollow_user", followRateLimit),
+					handlers.UnfollowUser,
+				)
 				follows.GET("/followers/:user_id", handlers.GetFollowers)
 				follows.GET("/following/:user_id", handlers.GetFollowing)
 			}
 
-			// Timeline route
+			// Timeline route (light rate limiting)
 			timeline := protected.Group("/timeline")
 			{
-				timeline.GET("/", handlers.GetTimeline)
+				timeline.GET("/",
+					rateLimiter.RateLimitByUser("timeline"),
+					handlers.GetTimeline,
+				)
 			}
 		}
 	}
