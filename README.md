@@ -101,10 +101,9 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 - Use token bucket or fixed window (via Redis) - [DONE]
 - Per user or IP — apply on post creation, likes, follow, etc - [DONE]
 
-## Phase 7: Deployment and CI/CD - [TODO]
+## Phase 7: Deployment and CI/CD - [IN PROGRESS]
 - Docker
-- Nginx
-- Make a Load Balancer (run on multiple instances)
+- Nginx (for reverse proxy, load balancing)
 
 ## Phase 8: Monitoring - [TODO]
 - Prometheus metrics
@@ -117,6 +116,12 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 - Add authentication using OAuth (GitHub, Google, etc)
 - Improve search functionality by adding some fuzzyness
 
+---
+
+# Screenshots
+![Profile Page](images/profile.png)
+![Timeline Page](images/timeline.png)
+![Rate Limiting](images/rateLimiting.png)
 
 ---
 
