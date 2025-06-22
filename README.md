@@ -10,7 +10,8 @@ A Twitter like Micro-Blogging website built with Go, PostgreSQL, and Redis.
 - PostgreSQL
 - Redis
 
-### Setup
+### Setup using Docker
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/ShauryaDusht/go-social-media-app
@@ -20,43 +21,19 @@ A Twitter like Micro-Blogging website built with Go, PostgreSQL, and Redis.
    ```bash
    cd go-social-media-app
    ```
-3. Set up environment variables:
-   Create a `.env` file in the root directory with the following content:
-   ```env
-    DB_HOST=localhost
-    DB_PORT=xxxx
-    DB_USER=admin
-    DB_PASSWORD=your_db_password
-    DB_NAME=social_media
-    DB_SSL_MODE=disable
-
-    REDIS_HOST=localhost
-    REDIS_PORT=6379
-    REDIS_PASSWORD=your_redis_password
-    REDIS_DB=0
-
-    JWT_SECRET=your_jwt_secret
-    JWT_EXPIRATION=24h
-
-    SERVER_PORT=8081
-    SERVER_HOST=0.0.0.0
-    ENVIRONMENT=development
-
-    RATE_LIMITING_REQUESTS=100
-    RATE_LIMITING_WINDOW=1h
-    ```
-
-4. Build the Docker image:
+3.  Build the Docker images:
    ```bash
-   docker compose up -d --build
+   docker-compose build
    ```
-5. Run the application:
-   ```bash
-   go run main.go
-    ```
-6. Access the application in your browser:
 
-   Open `http://localhost:8081` for the web interface.
+4. Start the services:
+   ```bash
+   docker-compose up
+   ```
+
+5. Access the application at `http://localhost:8081`
+
+6. Access Grafana for monitoring at `http://localhost:3000`
 
 ### Docker Commands
 - Start services: `docker-compose up -d`
@@ -91,7 +68,7 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 - Like/unlike posts - [BUG] : re-liking a post gives error
 - User timeline logic - [UPDATE] : has to be updated according to the user's following list (currently it is showing all posts of all users)
 
-## Phase 5: Follow System and Caching - [IN PROGRESS]
+## Phase 5: Follow System and Caching - [DONE]
 - Follow System - [DONE]
 - Caching Timeline - [DONE]
 - User profile search functionality - [DONE]
@@ -101,16 +78,16 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 - Use token bucket or fixed window (via Redis) - [DONE]
 - Per user or IP — apply on post creation, likes, follow, etc - [DONE]
 
-## Phase 7: Deployment and CI/CD - [IN PROGRESS]
+## Phase 7: Deployment and CI/CD - [TODO]
 - Docker
-- Nginx (for reverse proxy, load balancing)
+- Nginx (for reverse proxy)
 
-## Phase 8: Monitoring - [TODO]
-- Prometheus metrics
-- Grafana dashboard
+## Phase 8: Monitoring - [DONE]
+- Prometheus metrics - [DONE]
+- Grafana dashboard - [DONE]
 
 ## Phase 9: Testing - [TODO]
-- Testing using python/go scripts
+- Testing using go scripts
 
 ## Additional Features - [TODO]
 - Add authentication using OAuth (GitHub, Google, etc)
@@ -137,6 +114,7 @@ social-media-app/
 ├── go.sum
 ├── images/
 │   ├── profile.png
+│   ├── rateLimiting.png
 │   └── timeline.png
 ├── internal/
 │   ├── api/
@@ -149,6 +127,7 @@ social-media-app/
 │   │   ├── middleware/
 │   │   │   ├── auth.go
 │   │   │   ├── cors.go
+│   │   │   ├── metrics.go
 │   │   │   └── rate_limit.go
 │   │   └── routes.go
 │   ├── config/
@@ -185,6 +164,12 @@ social-media-app/
 │       └── response.go
 ├── LICENSE
 ├── main.go
+├── monitoring/
+│   ├── grafana/
+│   │   └── dashboards/
+│   │       └── api-metrics-dashboard.json
+│   └── prometheus/
+│       └── prometheus.yml
 ├── README.md
 ├── scripts/
 │   ├── init.sql

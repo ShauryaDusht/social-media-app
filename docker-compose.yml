@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -32,25 +30,73 @@ services:
       dockerfile: deployments/docker/Dockerfile
     container_name: social_app
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=admin
       - DB_PASSWORD=password123
       - DB_NAME=social_media
+      - DB_SSL_MODE=disable
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=password123
+      - REDIS_DB=0
       - JWT_SECRET=520da3d8c22c063582f82383eaa5b66b5b412df8869495e386a05b4c8b710d8c
+      - JWT_EXPIRATION=24h
+      - SERVER_PORT=8081
+      - SERVER_HOST=0.0.0.0
+      - ENVIRONMENT=production
+      - RATE_LIMITING_REQUESTS=100
+      - RATE_LIMITING_WINDOW=1h
     depends_on:
       - postgres
       - redis
     networks:
       - social_network
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: social_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - social_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: social_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PROVISIONING_PATH=/etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - social_network
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   social_network:

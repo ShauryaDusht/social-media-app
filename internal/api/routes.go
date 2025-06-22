@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"social-media-app/internal/api/handlers"
 	"social-media-app/internal/api/middleware"
@@ -26,6 +27,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
+	router.Use(middleware.PrometheusMiddleware())
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -34,6 +36,9 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 			"message": "Social Media API is running",
 		})
 	})
+
+	// Metrics endpoint
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// API routes
 	api := router.Group("/api")
