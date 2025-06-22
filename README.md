@@ -41,6 +41,12 @@ A Twitter like Micro-Blogging website built with Go, PostgreSQL, and Redis.
 - View logs: `docker-compose logs -f`
 - Rebuild: `docker-compose up --build`
 
+# Screenshots
+![Profile Page](images/profile.png)
+![Timeline Page](images/timeline.png)
+![Rate Limiting](images/rateLimiting.png)
+![Grafana Dashboard](images/grafana-dashboard.png)
+
 ---
 
 # Project Status
@@ -66,7 +72,7 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 ## Phase 4: Post APIs - [IN PROGRESS]
 - CRUD APIs for posts - [DONE]
 - Like/unlike posts - [BUG] : re-liking a post gives error
-- User timeline logic - [UPDATE] : has to be updated according to the user's following list (currently it is showing all posts of all users)
+- User timeline logic - [DONE]
 
 ## Phase 5: Follow System and Caching - [DONE]
 - Follow System - [DONE]
@@ -90,15 +96,10 @@ This section outlines the progress and current status of the Micro-Blogging Proj
 - Testing using go scripts
 
 ## Additional Features - [TODO]
-- Add authentication using OAuth (GitHub, Google, etc)
+- Add pagination to posts
 - Improve search functionality by adding some fuzzyness
-
----
-
-# Screenshots
-![Profile Page](images/profile.png)
-![Timeline Page](images/timeline.png)
-![Rate Limiting](images/rateLimiting.png)
+- Add feature to see followers and following list of a user
+- Add comments to posts
 
 ---
 
